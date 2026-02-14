@@ -11,7 +11,7 @@ dependencies = [
     "pyperclip>=1.8.2",
     "Pillow>=10.0.0",
     "pywin32>=306 ; sys_platform == 'win32'",
-    # Calendar watcher dependencies
+    # Calendar & Email watcher dependencies (shared Google APIs)
     "google-api-python-client>=2.100.0",
     "google-auth-oauthlib>=1.0.0",
     "google-auth-httplib2>=0.2.0",

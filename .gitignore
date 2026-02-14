@@ -16,6 +16,7 @@ __pycache__/
 # Extracted data (but keep metadata.json and event files)
 Data_Layer/Data_Collection/Clipboard/data/
 Data_Layer/Data_Collection/Calendar/data/
+Data_Layer/Data_Collection/Email/data/
 *.csv
 temp_*
 

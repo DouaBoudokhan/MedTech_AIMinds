@@ -11,7 +11,8 @@ ai-minds/
 │       ├── Browser/              # Browser history extraction
 │       ├── File_System/          # File system monitoring
 │       ├── Clipboard/            # Clipboard monitoring (text, URLs, images, files)
-│       └── Calendar/             # Google Calendar integration
+│       ├── Calendar/             # Google Calendar integration
+│       └── Email/                # Gmail monitoring
 ├── pyproject.toml               # Project dependencies (using UV)
 ├── .gitignore
 └── README.md
@@ -53,6 +54,12 @@ cd Data_Layer/Data_Collection/Calendar
 python calendar_watcher.py
 ```
 
+**Email Monitoring:**
+```bash
+cd Data_Layer/Data_Collection/Email
+python email_watcher.py
+```
+
 ## Module Status
 
 | Module | Status | Description |
@@ -61,6 +68,7 @@ python calendar_watcher.py
 | File_System | ✅ Complete | Monitors file system activity |
 | Clipboard | ✅ Complete | Captures text, URLs, images, files from clipboard |
 | Calendar | ✅ Complete | Google Calendar event monitoring |
+| Email | ✅ Complete | Gmail monitoring |
 
 ## Module Details
 
@@ -103,6 +111,17 @@ Monitors Google Calendar for upcoming events and meetings.
 - OAuth 2.0 authentication
 
 **Setup:** See [Data_Layer/Data_Collection/Calendar/README.md](Data_Layer/Data_Collection/Calendar/README.md) for Google Cloud setup instructions.
+
+### Email (by Sarra)
+Monitors Gmail for new emails and captures them automatically.
+
+**Features:**
+- Email capture (subject, sender, recipients, body)
+- Headers and metadata (labels, attachments, read/unread status)
+- 5-minute polling interval
+- Looks back 10 minutes for new emails
+- Shared OAuth authentication with Calendar watcher
+- Thread and message ID tracking
 
 ## Standardized Metadata Schema
 
