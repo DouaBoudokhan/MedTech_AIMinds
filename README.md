@@ -1,6 +1,14 @@
-# AI MINDS - Data Ingestion Layer
+# 🧠 AI MINDS - Personal Knowledge Assistant
 
-Multimodal personal knowledge assistant - Data collection and ingestion modules for MemoryOS.
+**Multimodal personal knowledge system** that converts your digital footprint into searchable, structured memory.
+
+## 🎯 Overview
+
+AI MINDS ingests data from multiple sources (browser, screenshots, clipboard, calendar, emails, documents) with dual-vector embeddings (text 384d + visual 512d).
+
+**Architecture**: Text → Sentence-Transformers → Faiss | Images → CLIP → Faiss | Storage → SQLite + Faiss
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for complete system design.
 
 ## Project Structure
 
