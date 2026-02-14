@@ -475,7 +475,7 @@ class BrowserDataExtractor:
             by_month[month_key].append(record)
         
         # Create output directory if it doesn't exist
-        output_dir = Path(__file__).parent.parent.parent / "Data Storage"
+        output_dir = Path(__file__).parent.parent.parent / "Data_Storage"
         output_dir.mkdir(parents=True, exist_ok=True)
         
         # Export each month to a separate file
