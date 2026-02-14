@@ -1,14 +1,6 @@
-# 🧠 AI MINDS - Personal Knowledge Assistant
+# AI MINDS - Data Ingestion Layer
 
-**Multimodal personal knowledge system** that converts your digital footprint into searchable, structured memory.
-
-## 🎯 Overview
-
-AI MINDS ingests data from multiple sources (browser, screenshots, clipboard, calendar, emails, documents) with dual-vector embeddings (text 384d + visual 512d).
-
-**Architecture**: Text → Sentence-Transformers → Faiss | Images → CLIP → Faiss | Storage → SQLite + Faiss
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for complete system design.
+Multimodal personal knowledge assistant - Data collection and ingestion modules for MemoryOS.
 
 ## Project Structure
 
@@ -31,13 +23,11 @@ ai-minds/
 ### 1. Install Dependencies
 
 Using UV (recommended):
-
 ```bash
 uv sync
 ```
 
 Or using pip:
-
 ```bash
 pip install -e .
 ```
@@ -47,28 +37,24 @@ pip install -e .
 Each module runs independently:
 
 **Browser History Extraction:**
-
 ```bash
 cd Data_Layer/Data_Collection/Browser
 python browser_ingestion.py
 ```
 
 **Clipboard Monitoring:**
-
 ```bash
 cd Data_Layer/Data_Collection/Clipboard
 python clipboard_watcher.py
 ```
 
 **Calendar Monitoring:**
-
 ```bash
 cd Data_Layer/Data_Collection/Calendar
 python calendar_watcher.py
 ```
 
 **Email Monitoring:**
-
 ```bash
 cd Data_Layer/Data_Collection/Email
 python email_watcher.py
@@ -76,42 +62,36 @@ python email_watcher.py
 
 ## Module Status
 
-| Module      | Status      | Description                                       |
-| ----------- | ----------- | ------------------------------------------------- |
-| Browser     | ✅ Complete | Extracts browser history                          |
-| File_System | ✅ Complete | Monitors file system activity                     |
-| Clipboard   | ✅ Complete | Captures text, URLs, images, files from clipboard |
-| Calendar    | ✅ Complete | Google Calendar event monitoring                  |
-| Email       | ✅ Complete | Gmail monitoring                                  |
+| Module | Status | Description |
+|--------|--------|-------------|
+| Browser | ✅ Complete | Extracts browser history |
+| File_System | ✅ Complete | Monitors file system activity |
+| Clipboard | ✅ Complete | Captures text, URLs, images, files from clipboard |
+| Calendar | ✅ Complete | Google Calendar event monitoring |
+| Email | ✅ Complete | Gmail monitoring |
 
 ## Module Details
 
 ### Browser (by Roua)
-
 Extracts browsing history from major browsers for search and discovery.
 
 **Features:**
-
 - Multi-browser support (Chrome, Firefox, Edge)
 - History extraction with timestamps
 - URL and title metadata
 
 ### File_System (by Roua)
-
 Monitors file system activity and document access patterns.
 
 **Features:**
-
 - File change detection
 - Document access tracking
 - Activity logging
 
 ### Clipboard (by Sarra)
-
 Monitors clipboard for copied content and automatically captures it.
 
 **Features:**
-
 - Text capture
 - URL detection
 - Image capture (screenshots)
@@ -120,11 +100,9 @@ Monitors clipboard for copied content and automatically captures it.
 - Silent background operation
 
 ### Calendar (by Sarra)
-
 Monitors Google Calendar for upcoming events and meetings.
 
 **Features:**
-
 - Event capture (title, description, time, location)
 - Attendee information
 - Meeting links (Google Meet, etc.)
@@ -135,11 +113,9 @@ Monitors Google Calendar for upcoming events and meetings.
 **Setup:** See [Data_Layer/Data_Collection/Calendar/README.md](Data_Layer/Data_Collection/Calendar/README.md) for Google Cloud setup instructions.
 
 ### Email (by Sarra)
-
 Monitors Gmail for new emails and captures them automatically.
 
 **Features:**
-
 - Email capture (subject, sender, recipients, body)
 - Headers and metadata (labels, attachments, read/unread status)
 - 5-minute polling interval
