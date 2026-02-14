@@ -1,8 +1,0 @@
-# Virtual Environment (managed at root level)
-# venv/ is in root .gitignore
-
-# Email data (captured emails)
-data/
-
-# Gmail credentials (shared with Calendar module)
-# Uses ../Calendar/credentials.json

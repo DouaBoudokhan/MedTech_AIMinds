@@ -25,9 +25,9 @@ TOKEN_FILE = 'token.pickle'
 CREDENTIALS_FILE = 'credentials.json'
 POLL_INTERVAL = 300  # Check every 5 minutes
 LOOKBACK_MINUTES = 10  # Look back 10 minutes for new emails
-DATA_DIR = Path('data')
-EMAILS_DIR = DATA_DIR / 'emails'
-METADATA_FILE = DATA_DIR / 'metadata.json'
+DATA_STORAGE = Path(__file__).parent.parent.parent / "Data_Storage"
+EMAILS_DIR = DATA_STORAGE / "Email" / "emails"
+METADATA_FILE = DATA_STORAGE / "Email" / "metadata.json"
 
 
 class EmailWatcher:
@@ -36,9 +36,9 @@ class EmailWatcher:
     def __init__(self, base_dir: Path = None):
         """Initialize the email watcher."""
         self.base_dir = base_dir or Path(__file__).parent
-        self.emails_dir = self.base_dir / EMAILS_DIR
-        self.metadata_file = self.base_dir / METADATA_FILE
-        self.credentials_file = self.base_dir.parent.parent / 'Calendar' / CREDENTIALS_FILE
+        self.emails_dir = EMAILS_DIR
+        self.metadata_file = METADATA_FILE
+        self.credentials_file = self.base_dir.parent / 'Calendar' / CREDENTIALS_FILE
         self.token_file = self.base_dir / TOKEN_FILE
 
         self.service = None

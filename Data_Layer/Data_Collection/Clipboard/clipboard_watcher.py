@@ -29,10 +29,11 @@ except ImportError:
 # Configuration
 POLL_INTERVAL = 1.0  # seconds
 DEDUP_WINDOW = 5.0  # seconds - skip identical content within this window
-METADATA_FILE = "data/text/metadata.json"
-IMAGES_FOLDER = "data/images"
-FILES_FOLDER = "data/files"
-COPIED_FILES_FOLDER = "data/copied_files"
+DATA_STORAGE = Path(__file__).parent.parent.parent / "Data_Storage"
+METADATA_FILE = DATA_STORAGE / "Clipboard" / "metadata.json"
+IMAGES_FOLDER = DATA_STORAGE / "Clipboard" / "images"
+FILES_FOLDER = DATA_STORAGE / "Clipboard" / "files"
+COPIED_FILES_FOLDER = DATA_STORAGE / "Clipboard" / "copied_files"
 CONTENT_PREVIEW_LENGTH = 200
 
 
@@ -47,10 +48,10 @@ class ClipboardWatcher:
         else:
             self.base_dir = Path(base_dir)
 
-        self.images_dir = self.base_dir / IMAGES_FOLDER
-        self.files_dir = self.base_dir / FILES_FOLDER
-        self.copied_files_dir = self.base_dir / COPIED_FILES_FOLDER
-        self.metadata_path = self.base_dir / METADATA_FILE
+        self.images_dir = IMAGES_FOLDER
+        self.files_dir = FILES_FOLDER
+        self.copied_files_dir = COPIED_FILES_FOLDER
+        self.metadata_path = METADATA_FILE
 
         # Deduplication tracking: {content_hash: timestamp}
         self.recent_captures = {}

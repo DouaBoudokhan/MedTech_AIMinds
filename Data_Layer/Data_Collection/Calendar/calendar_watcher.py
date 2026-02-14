@@ -22,9 +22,9 @@ TOKEN_FILE = 'token.pickle'
 CREDENTIALS_FILE = 'credentials.json'
 POLL_INTERVAL = 300  # Check every 5 minutes (300 seconds)
 LOOKAHEAD_DAYS = 30  # Look ahead 30 days for events
-DATA_DIR = Path('data')
-EVENTS_DIR = DATA_DIR / 'events'
-METADATA_FILE = DATA_DIR / 'metadata.json'
+DATA_STORAGE = Path(__file__).parent.parent.parent / "Data_Storage"
+EVENTS_DIR = DATA_STORAGE / "Calendar" / "events"
+METADATA_FILE = DATA_STORAGE / "Calendar" / "metadata.json"
 
 
 class CalendarWatcher:
@@ -33,8 +33,8 @@ class CalendarWatcher:
     def __init__(self, base_dir: Path = None):
         """Initialize the calendar watcher."""
         self.base_dir = base_dir or Path(__file__).parent
-        self.events_dir = self.base_dir / EVENTS_DIR
-        self.metadata_file = self.base_dir / METADATA_FILE
+        self.events_dir = EVENTS_DIR
+        self.metadata_file = METADATA_FILE
         self.credentials_file = self.base_dir / CREDENTIALS_FILE
         self.token_file = self.base_dir / TOKEN_FILE
 

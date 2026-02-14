@@ -3,7 +3,7 @@ venv/
 .venv/
 env/
 ENV/
-
+.claude/
 # UV
 uv.lock
 
@@ -13,16 +13,15 @@ __pycache__/
 *$py.class
 *.so
 
-# Extracted data (but keep metadata.json and event files)
-Data_Layer/Data_Collection/Clipboard/data/
-Data_Layer/Data_Collection/Calendar/data/
-Data_Layer/Data_Collection/Email/data/
+# Extracted data
+Data_Layer/Data_Storage/
 *.csv
 temp_*
 
-# Calendar credentials (SENSITIVE!)
+# Calendar & Email credentials (SENSITIVE!)
 Data_Layer/Data_Collection/Calendar/credentials.json
 Data_Layer/Data_Collection/Calendar/token.pickle
+Data_Layer/Data_Collection/Email/token.pickle
 
 # IDE
 .vscode/
