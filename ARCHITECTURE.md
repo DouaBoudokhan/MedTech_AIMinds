@@ -5,6 +5,7 @@
 ### ✅ **SOLID FOUNDATION - Your Architecture is Well-Designed**
 
 **Strengths:**
+
 1. ✅ **Clear separation of concerns** (Input → Processing → Storage)
 2. ✅ **Dual-collection strategy** (text 384d + visual 512d) - optimal for multimodal
 3. ✅ **Intelligent chunking** - handles both short and long documents
@@ -13,6 +14,7 @@
 6. ✅ **Scalable** - Faiss can handle millions of vectors
 
 **Minor Improvements:**
+
 1. ⚠️ **Audio → CLIP?** - CLIP is for images/text, not needed for audio transcripts
    - **Fix**: Audio → Whisper → transcript → text_collection (no CLIP)
 2. ✅ **Neo4j addition** - EXCELLENT idea for relationship mapping
@@ -64,12 +66,14 @@
 ### **WHEN TO USE NEO4J vs SQLite**
 
 **Use SQLite for:**
+
 - ✅ Metadata lookups (by ID, timestamp, source_type)
 - ✅ Simple parent-child (memory_item → chunks)
 - ✅ Fast existence checks
 - ✅ Counting, aggregations
 
 **Use Neo4j for:**
+
 - ✅ "Find all documents related to person X"
 - ✅ "What meetings happened before this email?"
 - ✅ "Show me the chain of documents about project Y"
@@ -77,6 +81,7 @@
 - ✅ Temporal graphs (timeline of events)
 
 **Verdict:** Neo4j is **worth it** if you need:
+
 - Temporal reasoning (before/after relationships)
 - Entity co-occurrence networks
 - Multi-hop queries ("friends of friends")
@@ -158,25 +163,30 @@ AI minds/
 ## 🔧 Technology Stack
 
 ### **Vector Storage**
+
 - **Faiss-CPU** (1.7.4+): L2 for text, IP for visual
 - Collections: `text_collection` (384d), `visual_collection` (512d)
 
 ### **Embeddings**
+
 - **Text**: `paraphrase-multilingual-MiniLM-L12-v2` (118M, 384d, FR+EN)
 - **Vision**: `openai/clip-vit-base-patch32` (151M, 512d)
 
 ### **Processing**
+
 - **OCR**: `pytesseract` or `easyocr`
 - **Audio**: `openai/whisper-tiny` or `whisper-base` (<1B params)
 - **Documents**: `PyPDF2`, `python-docx`
 - **NER**: `spacy` (fr_core_news_sm, en_core_web_sm)
 
 ### **LLM (Local <4B params)**
+
 - **Phi-2** (2.7B) - Microsoft, best reasoning
 - **TinyLlama** (1.1B) - Fast, good quality
 - **MobileLLM** (350M-1B) - Ultra-efficient
 
 ### **Database**
+
 - **SQLite**: Built-in, metadata
 - **Neo4j** [Optional]: Graph relationships
 
@@ -185,6 +195,7 @@ AI minds/
 ## 🚀 Implementation Priority
 
 ### **Phase 1: Core Storage** ✅ DONE
+
 - [x] Browser ingestion
 - [x] Storage manager (Faiss + SQLite)
 - [x] Text embeddings
@@ -192,29 +203,34 @@ AI minds/
 - [x] Chunking system
 
 ### **Phase 2: Additional Data Sources** 📝 IN PROGRESS
+
 - [ ] Calendar watcher
 - [ ] Clipboard watcher
 - [ ] File system monitor
 - [ ] Screenshot capture
 
 ### **Phase 3: Processing Engines**
+
 - [ ] OCR for images
 - [ ] Audio transcription (Whisper)
 - [ ] Document extraction (PDF/DOCX)
 - [ ] Entity extraction (NER)
 
 ### **Phase 4: RAG & LLM**
+
 - [ ] Embeddings manager
 - [ ] RAG engine
 - [ ] Local LLM integration (Phi-2)
 - [ ] Query understanding
 
 ### **Phase 5: User Interface**
+
 - [ ] Chat interface (CLI)
 - [ ] Background daemon
 - [ ] Web UI [Optional]
 
 ### **Phase 6: Advanced Features** [Optional]
+
 - [ ] Neo4j integration
 - [ ] Temporal reasoning
 - [ ] Entity networks
@@ -225,17 +241,20 @@ AI minds/
 ## 💡 Recommendations
 
 ### **Start Now:**
+
 1. ✅ Keep current Faiss + SQLite setup
 2. ✅ Complete 4 other data sources (Calendar, Clipboard, File System, Screenshots)
 3. ✅ Implement OCR for images
 4. ✅ Build RAG engine with local LLM
 
 ### **Add Later (if needed):**
+
 1. Neo4j - Only if you need complex relationship queries
 2. Advanced NER - Start with spaCy, upgrade if needed
 3. Web UI - CLI first, web later
 
 ### **Skip (for now):**
+
 1. Audio processing - Unless voice recording is core use case
 2. Real-time video - Out of scope for personal knowledge system
 3. Cloud deployment - Challenge requires local operation
@@ -245,17 +264,20 @@ AI minds/
 ## 📊 Expected Performance
 
 ### **Storage**
+
 - **Capacity**: 1M+ documents (Faiss handles it)
 - **Search latency**: < 100ms for 100k vectors
 - **Disk usage**: ~500MB per 100k documents
 
 ### **Ingestion Speed**
+
 - Browser: 800+ records/sec
 - Images (CLIP): ~10 images/sec (CPU)
 - OCR: ~2 images/sec
 - Audio (Whisper): ~5x realtime (Whisper-tiny)
 
 ### **LLM Inference**
+
 - Phi-2 (2.7B): ~20 tokens/sec (CPU)
 - TinyLlama (1.1B): ~50 tokens/sec (CPU)
 - Context: 2048 tokens
@@ -267,6 +289,7 @@ AI minds/
 **Your architecture is SOLID and well-thought-out.**
 
 Minor tweaks:
+
 1. Remove CLIP from audio pipeline
 2. Add Neo4j only if you need graph queries
 3. Focus on completing data sources first, then RAG

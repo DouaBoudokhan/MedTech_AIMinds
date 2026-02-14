@@ -9,7 +9,7 @@ This project follows a clean architecture with clear separation of concerns:
 ```
 AI minds/
 ├── Data_Layer/          # Data ingestion & storage
-├── Core/                # Processing engines  
+├── Core/                # Processing engines
 ├── API/                 # User interfaces
 └── Tests/               # Testing
 ```
@@ -17,6 +17,7 @@ AI minds/
 ## 🗂️ Detailed Structure
 
 ### Data_Layer/
+
 **Purpose**: Collect and store multimodal data
 
 - **Data_Collection/**: Input processors
@@ -32,12 +33,13 @@ AI minds/
   - vector_store/ - Faiss indices
     - text_index/ - Text embeddings (384d)
     - visual_index/ - Visual embeddings (512d)
-  - browser_data_*.json - Browser exports
-  - *.db - SQLite databases
+  - browser*data*\*.json - Browser exports
+  - \*.db - SQLite databases
 
 - **storage_manager.py**: Main storage interface
 
 ### Core/
+
 **Purpose**: Processing engines and AI models
 
 - embeddings.py - Sentence-Transformers & CLIP
@@ -51,12 +53,14 @@ AI minds/
 - neo4j_manager.py [Optional] - Graph DB
 
 ### API/
+
 **Purpose**: User interfaces
 
 - chat_interface.py - Interactive CLI chat
 - web_ui.py [Optional] - Web interface
 
 ### Tests/
+
 **Purpose**: Quality assurance
 
 - test_storage.py
@@ -66,23 +70,27 @@ AI minds/
 ## 🚀 Quick Start
 
 ### 1. Setup Environment
+
 ```bash
 uv sync
 ```
 
 ### 2. Collect Browser Data
+
 ```bash
 cd "Data_Layer\Data_Collection\Browser"
 python browser_ingestion.py
 ```
 
 ### 3. Index Data
+
 ```bash
 cd "Data_Layer"
 python storage_manager.py
 ```
 
 ### 4. Search
+
 ```python
 from Data_Layer.storage_manager import UnifiedStorageManager
 
@@ -93,6 +101,7 @@ results = manager.search("robe Zara", top_k=5)
 ## 📊 Current Status
 
 ✅ **Completed**:
+
 - Browser ingestion (824 records)
 - Storage manager (Faiss + SQLite)
 - Text embeddings (384d multilingual)
@@ -101,12 +110,14 @@ results = manager.search("robe Zara", top_k=5)
 - Screenshot watcher
 
 📝 **In Progress**:
+
 - Calendar watcher
 - Clipboard watcher
 - File system monitor
 - Email ingestion
 
 🔜 **Next**:
+
 - OCR integration
 - Audio transcription
 - RAG engine
@@ -119,6 +130,7 @@ See `ARCHITECTURE.md` for complete system design.
 ## 🤝 Team
 
 5-person team working on AI MINDS challenge:
+
 - Browser ingestion: ✅ Complete
 - Other 4 modules: In progress
 
