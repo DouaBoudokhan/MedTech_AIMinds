@@ -1,0 +1,34 @@
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# UV
+uv.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Extracted data
+*.json
+*.csv
+temp_*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment variables
+.env
