@@ -1,0 +1,39 @@
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+.claude/
+# UV
+uv.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Extracted data
+Data_Layer/Data_Storage/
+*.csv
+temp_*
+
+# Calendar & Email credentials (SENSITIVE!)
+Data_Layer/Data_Collection/Calendar/credentials.json
+Data_Layer/Data_Collection/Calendar/token.pickle
+Data_Layer/Data_Collection/Email/token.pickle
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment variables
+.env
