@@ -14,6 +14,11 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
+# Add ffmpeg to PATH BEFORE importing whisper
+ffmpeg_path = r"C:\Users\bousn\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.0.1-full_build\bin"
+import os
+os.environ["PATH"] = ffmpeg_path + os.pathsep + os.environ.get("PATH", "")
+
 print("="*70)
 print("VIDEO AUDIO TRANSCRIPTION TEST")
 print("="*70)
