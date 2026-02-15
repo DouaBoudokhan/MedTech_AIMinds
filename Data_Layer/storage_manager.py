@@ -58,7 +58,7 @@ class SQLiteMetadataStore:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         
-        self.conn = sqlite3.connect(str(self.db_path))
+        self.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self._create_tables()
     
@@ -187,7 +187,68 @@ class SQLiteMetadataStore:
         if row:
             return dict(row)
         return None
-    
+
+    def get_chunk_by_vector_id(self, vector_id: int) -> Optional[Dict]:
+        """Get chunk by its FAISS vector ID"""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM chunks WHERE vector_id = ? LIMIT 1", (vector_id,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+        return None
+
+    def get_memory_item_by_vector_id(self, vector_id: int) -> Optional[Dict]:
+        """Get memory item by its FAISS vector ID (for non-chunked items)"""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM memory_items WHERE vector_id = ? LIMIT 1", (vector_id,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+        return None
+
+    def resolve_text_vector_id(self, vector_id: int) -> Optional[Dict]:
+        """Resolve a text FAISS vector_id to its content and metadata.
+        
+        Checks both chunks and memory_items tables.
+        Returns dict with 'text', 'source', 'metadata', 'created_at'.
+        """
+        # First check chunks (chunked documents)
+        chunk = self.get_chunk_by_vector_id(vector_id)
+        if chunk:
+            # Get parent memory item for metadata
+            parent = self.get_memory_item(chunk['memory_item_id'])
+            metadata = {}
+            if parent:
+                try:
+                    metadata = json.loads(parent.get('metadata') or '{}') if parent.get('metadata') else {}
+                except (json.JSONDecodeError, TypeError):
+                    metadata = {}
+            return {
+                'text': chunk['chunk_text'],
+                'source': parent.get('source', 'unknown') if parent else 'unknown',
+                'metadata': metadata,
+                'created_at': parent.get('created_at', '') if parent else '',
+                'chunk_index': chunk.get('chunk_index', 0),
+                'memory_item_id': chunk.get('memory_item_id'),
+            }
+        
+        # Then check memory_items (non-chunked)
+        item = self.get_memory_item_by_vector_id(vector_id)
+        if item:
+            try:
+                metadata = json.loads(item.get('metadata') or '{}') if item.get('metadata') else {}
+            except (json.JSONDecodeError, TypeError):
+                metadata = {}
+            return {
+                'text': item['content'],
+                'source': item.get('source', 'unknown'),
+                'metadata': metadata,
+                'created_at': item.get('created_at', ''),
+                'memory_item_id': item.get('id'),
+            }
+        
+        return None
+
     def update_memory_item_vector_id(self, item_id: int, vector_id: int):
         """Set vector_id on a memory item"""
         cursor = self.conn.cursor()
@@ -740,12 +801,23 @@ class UnifiedStorageManager:
                     # Convert L2 distance to similarity score
                     score = 1.0 / (1.0 + dist)
                     
-                    results.append({
+                    # Resolve vector ID to actual text content
+                    resolved = self.metadata_store.resolve_text_vector_id(int(idx))
+                    
+                    result_entry = {
                         'vector_id': int(idx),
                         'score': float(score),
                         'type': 'text',
-                        'distance': float(dist)
-                    })
+                        'distance': float(dist),
+                    }
+                    
+                    if resolved:
+                        result_entry['text'] = resolved.get('text', '')
+                        result_entry['source'] = resolved.get('source', 'unknown')
+                        result_entry['metadata'] = resolved.get('metadata', {})
+                        result_entry['created_at'] = resolved.get('created_at', '')
+                    
+                    results.append(result_entry)
         
         # Visual search
         if search_type in ['visual', 'both']:
@@ -769,8 +841,15 @@ class UnifiedStorageManager:
                     candidate = {
                         'vector_id': int(idx),
                         'score': score,
-                        'type': 'visual'
+                        'type': 'visual',
                     }
+                    if visual_item:
+                        candidate['path'] = visual_item.get('path', '')
+                        candidate['text'] = visual_item.get('ocr_text', '')
+                        try:
+                            candidate['metadata'] = json.loads(visual_item.get('metadata') or '{}') if visual_item.get('metadata') else {}
+                        except (json.JSONDecodeError, TypeError):
+                            candidate['metadata'] = {}
 
                     if current is None or score > current['score']:
                         best_by_path[path_key] = candidate

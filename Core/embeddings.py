@@ -28,7 +28,7 @@ class EmbeddingManager:
     VISUAL_MODEL = "openai/clip-vit-base-patch32"
     TEXT_DIM = 1024                # BGE-m3 output dimension
     VISUAL_DIM = 512
-    OLLAMA_TIMEOUT_SECONDS = 8.0
+    OLLAMA_TIMEOUT_SECONDS = 120.0
     
     def __init__(self, device: Optional[str] = None):
         """
