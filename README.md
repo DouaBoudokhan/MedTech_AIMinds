@@ -218,20 +218,6 @@ python concierge.py
 - Chain-of-thought reasoning
 - Tool use (email, calendar, file navigation)
 
-## Module Status
-
-| Module | Status | Description |
-|--------|--------|-------------|
-| Browser | ✅ Complete | Extracts history from Chrome, Firefox, Edge, Safari (824+ records) |
-| Clipboard | ✅ Complete | Captures text, URLs, images, files with 5s deduplication |
-| Calendar | ✅ Complete | Google Calendar events (OAuth 2.0, 30-day lookahead) |
-| File_System | 📝 In Progress | Document activity tracking and monitoring |
-| Email | 📝 In Progress | Gmail monitoring with OAuth integration |
-| Screenshots | 📝 In Progress | Automatic screenshot capture |
-| Audio Recording | 📝 In Progress | Voice recording via Whisper transcription |
-| Storage Manager | ✅ Complete | UnifiedStorageManager with Faiss + SQLite |
-| Processing Engines | ✅ Complete | Embeddings, OCR, chunking, RAG pipeline |
-| Web UI | 🔜 Planned | Gradio/Streamlit interface |
 
 ### Core Components Status
 
