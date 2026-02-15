@@ -36,14 +36,15 @@ class AudioProcessor:
         except Exception as e:
             print(f"❌ Whisper error: {e}")
     
-    def transcribe(self, audio_path: str, language: str = None) -> Dict:
+    def transcribe(self, audio_path: str, language: str = None, use_gpu: bool = True) -> Dict:
         """
         Transcribe audio file
-        
+
         Args:
             audio_path: Path to audio file
             language: Language code ('en', 'fr', etc.) or None for auto-detect
-            
+            use_gpu: Use GPU if available (default: True)
+
         Returns:
             Dictionary with transcription results
         """
@@ -52,13 +53,20 @@ class AudioProcessor:
                 'text': '',
                 'error': 'Whisper model not loaded'
             }
-        
+
         try:
+            # Check if CUDA is available
+            import torch
+            device = "cuda" if use_gpu and torch.cuda.is_available() else "cpu"
+
+            # Move model to device
+            self.model = self.model.to(device)
+
             # Transcribe
             result = self.model.transcribe(
                 audio_path,
                 language=language,
-                fp16=False  # Disable FP16 for CPU compatibility
+                fp16=(device == "cuda")  # Enable FP16 only on GPU
             )
             
             return {

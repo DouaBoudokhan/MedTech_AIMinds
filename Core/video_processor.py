@@ -30,11 +30,11 @@ from pathlib import Path
 from datetime import datetime
 
 # Import existing processors
-from audio_processor import AudioProcessor
-from image_processor import ImageProcessor
+from Core.audio_processor import AudioProcessor
+from Core.image_processor import ImageProcessor
 
 try:
-    from embeddings import EmbeddingManager
+    from Core.embeddings import EmbeddingManager
 except ImportError:
     EmbeddingManager = None
 
@@ -46,7 +46,8 @@ class VideoProcessor:
         self,
         whisper_model: str = "base",
         frame_interval_sec: int = 3,
-        ocr_engine: str = "easyocr"
+        ocr_engine: str = "easyocr",
+        use_gpu: bool = True
     ):
         """
         Initialize video processor
@@ -55,10 +56,21 @@ class VideoProcessor:
             whisper_model: Whisper model size ('tiny', 'base', 'small')
             frame_interval_sec: Extract frames every N seconds (default: 3)
             ocr_engine: OCR engine for frame text extraction
+            use_gpu: Use GPU if available (default: True)
         """
         print(f"\n{'='*70}")
         print("🎬 VIDEO PROCESSOR INITIALIZED")
         print(f"{'='*70}")
+
+        # Check GPU availability
+        import torch
+        self.use_gpu = use_gpu and torch.cuda.is_available()
+        self.device = "cuda" if self.use_gpu else "cpu"
+
+        if self.use_gpu:
+            print(f"✅ Using GPU: {torch.cuda.get_device_name(0)}")
+        else:
+            print(f"⚠️  Using CPU (GPU not available or disabled)")
 
         # Audio transcription
         self.audio = AudioProcessor(model_size=whisper_model)
