@@ -19,3 +19,33 @@
     "file_extension": ".jpg",
     "full_path": "C:\\Users\\USER\\Desktop\\wildly wholesome insta.jpg"
 }
+{
+    "timestamp": "2026-02-15 01:48:04",
+    "event_type": "CREATED",
+    "filename": "téléchargement (2).jpg",
+    "file_extension": ".jpg",
+    "full_path": "C:\\Users\\USER\\Desktop\\téléchargement (2).jpg",
+    "content_type": "image"
+}
+{
+    "timestamp": "2026-02-15 01:48:38",
+    "event_type": "FOLDER_CREATED",
+    "folder_name": "xr",
+    "full_path": "C:\\Users\\USER\\Downloads\\xr"
+}
+{
+    "timestamp": "2026-02-15 01:48:38",
+    "event_type": "CREATED",
+    "filename": "xr seance1.txt",
+    "file_extension": ".txt",
+    "full_path": "C:\\Users\\USER\\Downloads\\xr\\xr seance1.txt",
+    "content_type": "file"
+}
+{
+    "timestamp": "2026-02-15 01:48:38",
+    "event_type": "CREATED",
+    "filename": "xr_seance1",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Downloads\\xr\\xr_seance1",
+    "content_type": "file"
+}

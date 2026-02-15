@@ -52,6 +52,12 @@ class TextProcessor:
             chunk_size = self.CHUNK_SIZE_LONG
         if overlap is None:
             overlap = self.CHUNK_OVERLAP
+
+        if chunk_size <= 0:
+            raise ValueError("chunk_size must be > 0")
+
+        # Keep overlap valid and guarantee forward progress
+        overlap = max(0, min(overlap, chunk_size - 1))
         
         # Don't chunk if text is short
         if len(text) <= chunk_size:
@@ -79,14 +85,19 @@ class TextProcessor:
                     chunk = chunk[:break_pos]
                     end = start + break_pos
             
-            chunks.append((chunk.strip(), start, end))
-            
-            # Move to next chunk with overlap
-            start = end - overlap
-            
-            # Prevent infinite loop
-            if start >= len(text):
+            clean_chunk = chunk.strip()
+            if clean_chunk:
+                chunks.append((clean_chunk, start, end))
+
+            # End reached: stop cleanly
+            if end >= len(text):
                 break
+
+            # Move to next chunk with overlap (must move forward)
+            next_start = end - overlap
+            if next_start <= start:
+                next_start = start + 1
+            start = next_start
         
         return chunks
     

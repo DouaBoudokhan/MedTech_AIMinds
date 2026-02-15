@@ -36,6 +36,8 @@ class ActivityMonitor(FileSystemEventHandler):
     
     # Browser download temp extensions (track completion, not creation)
     DOWNLOAD_TEMP_EXTENSIONS = {'.crdownload', '.part'}
+
+    IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp'}
     
     # Database/system extensions to ignore
     IGNORE_EXTENSIONS = {
@@ -92,12 +94,15 @@ class ActivityMonitor(FileSystemEventHandler):
         
         # Create JSON log entry
         path_obj = Path(path)
+        extension = path_obj.suffix.lower()
+        content_type = "image" if extension in self.IMAGE_EXTENSIONS else "file"
         log_entry = {
             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             "event_type": event_type,
             "filename": path_obj.name,
             "file_extension": path_obj.suffix,
-            "full_path": str(path_obj.resolve())
+            "full_path": str(path_obj.resolve()),
+            "content_type": content_type
         }
         
         if dest_path:
@@ -163,12 +168,15 @@ class ActivityMonitor(FileSystemEventHandler):
         if src_ext in self.DOWNLOAD_TEMP_EXTENSIONS and not self._should_ignore(event.dest_path):
             # Download completed! Log as DOWNLOADED instead of MOVED
             dest_obj = Path(event.dest_path)
+            extension = dest_obj.suffix.lower()
+            content_type = "image" if extension in self.IMAGE_EXTENSIONS else "file"
             log_entry = {
                 "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 "event_type": "DOWNLOADED",
                 "filename": dest_obj.name,
                 "file_extension": dest_obj.suffix,
-                "full_path": str(dest_obj.resolve())
+                "full_path": str(dest_obj.resolve()),
+                "content_type": content_type
             }
             json_line = json.dumps(log_entry, ensure_ascii=False, indent=4)
             self.log_file.write(json_line + '\n')

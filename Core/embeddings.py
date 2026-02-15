@@ -102,9 +102,18 @@ class EmbeddingManager:
         
         with torch.no_grad():
             image_features = self.clip_model.get_image_features(**inputs)
+
+            # Compatibility: some environments may return model outputs instead of tensor
+            if not isinstance(image_features, torch.Tensor):
+                if hasattr(image_features, 'pooler_output'):
+                    image_features = image_features.pooler_output
+                elif hasattr(image_features, 'last_hidden_state'):
+                    image_features = image_features.last_hidden_state[:, 0, :]
+                else:
+                    raise TypeError(f"Unexpected CLIP image feature output type: {type(image_features)}")
         
         # Convert to numpy
-        embeddings = image_features.cpu().numpy()
+        embeddings = image_features.detach().cpu().numpy()
         
         # Normalize if requested
         if normalize:

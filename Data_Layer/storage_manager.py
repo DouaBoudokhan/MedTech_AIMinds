@@ -11,6 +11,7 @@ Storage architecture:
 
 import json
 import sqlite3
+import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
@@ -372,23 +373,47 @@ class UnifiedStorageManager:
                 data = json.load(f)
             
             count = 0
-            for item in data:
-                # Combine title and URL for search
-                text = f"{item.get('title', '')} {item.get('url', '')}"
+            
+            # Handle nested structure: data["records_by_day"]["date"][items]
+            if isinstance(data, dict) and 'records_by_day' in data:
+                records_by_day = data['records_by_day']
                 
-                # Add search query if available
-                if 'search_query' in item and item['search_query']:
-                    text += f" {item['search_query']}"
-                
-                self.ingest_text(text, source='browser', metadata=item)
-                count += 1
+                for date, records in records_by_day.items():
+                    if not isinstance(records, list):
+                        continue
+                    for item in records:
+                        if not isinstance(item, dict):
+                            continue
+                        # Combine title and URL for search
+                        text = f"{item.get('title', '')} {item.get('url', '')}"
+                        
+                        # Add search query if available
+                        if 'search_query' in item and item['search_query']:
+                            text += f" {item['search_query']}"
+                        
+                        self.ingest_text(text, source='browser', metadata=item)
+                        count += 1
+            
+            # Handle flat list structure (backward compatibility)
+            elif isinstance(data, list):
+                for item in data:
+                    if not isinstance(item, dict):
+                        continue
+                    text = f"{item.get('title', '')} {item.get('url', '')}"
+                    
+                    if 'search_query' in item and item['search_query']:
+                        text += f" {item['search_query']}"
+                    
+                    self.ingest_text(text, source='browser', metadata=item)
+                    count += 1
             
             self.save()
             print(f"✅ Ingested {count} browser items from {Path(json_path).name}")
             return count
         
         except Exception as e:
-            print(f"❌ Error ingesting browser data: {e}")
+            print(f"❌ Error ingesting browser data from {Path(json_path).name}: {type(e).__name__}: {e!r}")
+            traceback.print_exc()
             return 0
     
     def ingest_image(self, image_path: str, ocr_text: str = None, metadata: Dict = None) -> int:
