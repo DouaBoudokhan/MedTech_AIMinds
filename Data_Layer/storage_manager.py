@@ -3,7 +3,7 @@ Unified Storage Manager - Dual-Vector Storage System
 =====================================================
 
 Storage architecture:
-- Text embeddings: Sentence-Transformers (384d)
+- Text embeddings: BGE-m3 via Ollama (1024d)
 - Visual embeddings: CLIP (512d)  
 - Metadata: SQLite
 - Hierarchical: memory_items → chunks
@@ -32,7 +32,7 @@ class StorageConfig:
     METADATA_DB = STORAGE_DIR / "metadata.db"
     
     # Embedding dimensions
-    TEXT_DIM = 384
+    TEXT_DIM = 1024               # BGE-m3 via Ollama
     VISUAL_DIM = 512
     
     # Chunking parameters
@@ -41,7 +41,7 @@ class StorageConfig:
     CHUNK_OVERLAP = 150
     
     # Model names
-    TEXT_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+    TEXT_MODEL = "bge-m3"         # Served by Ollama
     VISUAL_MODEL = "openai/clip-vit-base-patch32"
 
 
@@ -186,6 +186,12 @@ class SQLiteMetadataStore:
             return dict(row)
         return None
     
+    def update_memory_item_vector_id(self, item_id: int, vector_id: int):
+        """Set vector_id on a memory item"""
+        cursor = self.conn.cursor()
+        cursor.execute("UPDATE memory_items SET vector_id = ? WHERE id = ?", (vector_id, item_id))
+        self.conn.commit()
+
     def get_memory_item(self, item_id: int) -> Optional[Dict]:
         """Get memory item by ID"""
         cursor = self.conn.cursor()
@@ -386,6 +392,11 @@ class UnifiedStorageManager:
         content_hash = self._compute_hash(f"{source}|{normalized}")
         existing = self.metadata_store.get_memory_item_by_hash(content_hash)
         if existing:
+            # If vector_id was never written (legacy data), repair it now
+            if existing.get('vector_id') is None:
+                embedding = self.embeddings.encode_text(text)
+                vector_ids = self.text_store.add(embedding)
+                self.metadata_store.update_memory_item_vector_id(int(existing['id']), vector_ids[0])
             return int(existing['id'])
         
         # Add memory item
@@ -411,6 +422,9 @@ class UnifiedStorageManager:
             
             # Add to vector store
             vector_ids = self.text_store.add(embedding)
+            
+            # Save vector_id back to memory_items so lookups work
+            self.metadata_store.update_memory_item_vector_id(memory_id, vector_ids[0])
         
         return memory_id
     

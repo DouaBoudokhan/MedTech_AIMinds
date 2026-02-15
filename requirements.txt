@@ -1,9 +1,10 @@
 # Core ML & Embeddings
 torch>=2.0.0
-sentence-transformers>=2.2.0
+ollama>=0.4.0
 transformers>=4.30.0
 faiss-cpu>=1.7.4
 numpy>=1.24.0
+easyocr>=1.7.0
 
 # Data Collection
 browser-history>=0.3.2
