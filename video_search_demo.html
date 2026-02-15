@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Search Demo - AI MINDS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .search-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1.1em;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-box button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-section label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .filter-section input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .video-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .video-container {
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .results-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .results-panel h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .result-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .result-item.audio {
+            border-left-color: #28a745;
+        }
+
+        .result-item.visual {
+            border-left-color: #ffc107;
+        }
+
+        .result-type {
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .result-item.audio .result-type {
+            color: #28a745;
+        }
+
+        .result-item.visual .result-type {
+            color: #ffc107;
+        }
+
+        .result-time {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .result-context {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .timeline {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .timeline h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .timeline-track {
+            position: relative;
+            height: 60px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: #667eea;
+            cursor: pointer;
+            transition: width 0.2s;
+        }
+
+        .timeline-marker:hover {
+            width: 8px;
+        }
+
+        .timeline-marker.audio {
+            background: #28a745;
+        }
+
+        .timeline-marker.visual {
+            background: #ffc107;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-box .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-box .label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .demo-notice {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .demo-notice strong {
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 Video Search Demo</h1>
+            <p>Search videos by audio transcription and visual content - AI MINDS</p>
+        </div>
+
+        <div class="content">
+            <div class="demo-notice">
+                <strong>Demo Mode:</strong> This is a UI demonstration. Backend integration required for full functionality.
+            </div>
+
+            <div class="search-section">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search for words spoken or objects in video...">
+                    <button onclick="performSearch()">🔍 Search</button>
+                </div>
+
+                <div class="filter-section">
+                    <label>
+                        <input type="checkbox" id="audioFilter" checked>
+                        Audio (what was said)
+                    </label>
+                    <label>
+                        <input type="checkbox" id="visualFilter" checked>
+                        Visual (what appeared)
+                    </label>
+                </div>
+            </div>
+
+            <div class="video-section">
+                <div class="video-container">
+                    <video id="videoPlayer" controls>
+                        <source src="sample_video.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+
+                <div class="results-panel">
+                    <h3>📍 Search Results</h3>
+                    <div id="resultsList">
+                        <div class="loading">
+                            <p>Enter a search query to see results</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline">
+                <h3>📊 Timeline of Matches</h3>
+                <div class="timeline-track" id="timelineTrack">
+                    <!-- Timeline markers will be inserted here -->
+                </div>
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="number" id="audioCount">0</div>
+                        <div class="label">Audio Matches</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="visualCount">0</div>
+                        <div class="label">Visual Matches</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="totalCount">0</div>
+                        <div class="label">Total Matches</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo data - simulates search results from backend
+        const demoResults = {
+            'flower': [
+                { timestamp: 8.5, type: 'audio', context: 'beautiful flower in the garden' },
+                { timestamp: 45.2, type: 'visual', context: 'Frame: Red rose visible' },
+                { timestamp: 127.8, type: 'audio', context: 'the flower bloomed early' },
+                { timestamp: 210.5, type: 'visual', context: 'Frame: Close-up of sunflower' },
+            ],
+            'meeting': [
+                { timestamp: 12.3, type: 'audio', context: 'lets schedule a meeting' },
+                { timestamp: 89.1, type: 'visual', context: 'Frame: Meeting room with people' },
+                { timestamp: 156.7, type: 'audio', context: 'meeting agenda discussion' },
+            ],
+            'project': [
+                { timestamp: 5.2, type: 'audio', context: 'project deadline is friday' },
+                { timestamp: 34.8, type: 'visual', context: 'Frame: Project timeline chart' },
+                { timestamp: 178.3, type: 'audio', context: 'completed the project phase' },
+                { timestamp: 234.1, type: 'visual', context: 'Frame: Project dashboard' },
+            ],
+        };
+
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const audioFilter = document.getElementById('audioFilter').checked;
+            const visualFilter = document.getElementById('visualFilter').checked;
+
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+
+            // Simulate loading
+            document.getElementById('resultsList').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Searching video...</p>
+                </div>
+            `;
+
+            // Simulate API delay
+            setTimeout(() => {
+                // Get demo results or generate random results
+                let results = demoResults[query] || generateRandomResults(query);
+
+                // Apply filters
+                if (audioFilter && !visualFilter) {
+                    results = results.filter(r => r.type === 'audio');
+                } else if (!audioFilter && visualFilter) {
+                    results = results.filter(r => r.type === 'visual');
+                }
+
+                displayResults(results);
+                updateTimeline(results);
+                updateStats(results);
+            }, 1000);
+        }
+
+        function generateRandomResults(query) {
+            // Generate random results for demo
+            const results = [];
+            const numResults = Math.floor(Math.random() * 5) + 2;
+
+            for (let i = 0; i < numResults; i++) {
+                const timestamp = Math.floor(Math.random() * 300);
+                const type = Math.random() > 0.5 ? 'audio' : 'visual';
+                results.push({
+                    timestamp: timestamp,
+                    type: type,
+                    context: type === 'audio' ?
+                        `"${query}" mentioned in conversation` :
+                        `Frame: ${query} detected in scene`
+                });
+            }
+
+            return results.sort((a, b) => a.timestamp - b.timestamp);
+        }
+
+        function displayResults(results) {
+            const resultsList = document.getElementById('resultsList');
+
+            if (results.length === 0) {
+                resultsList.innerHTML = '<div class="loading"><p>No matches found</p></div>';
+                return;
+            }
+
+            resultsList.innerHTML = results.map(result => `
+                <div class="result-item ${result.type}" onclick="jumpToTimestamp(${result.timestamp})">
+                    <div class="result-type">${result.type}</div>
+                    <div class="result-time">${formatTime(result.timestamp)}</div>
+                    <div class="result-context">${result.context}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateTimeline(results) {
+            const timelineTrack = document.getElementById('timelineTrack');
+            const videoDuration = 300; // Assume 5 minutes for demo
+
+            timelineTrack.innerHTML = results.map(result => {
+                const position = (result.timestamp / videoDuration) * 100;
+                return `
+                    <div class="timeline-marker ${result.type}"
+                         style="left: ${position}%"
+                         onclick="jumpToTimestamp(${result.timestamp})"
+                         title="${result.type} match at ${formatTime(result.timestamp)}">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats(results) {
+            const audioCount = results.filter(r => r.type === 'audio').length;
+            const visualCount = results.filter(r => r.type === 'visual').length;
+
+            document.getElementById('audioCount').textContent = audioCount;
+            document.getElementById('visualCount').textContent = visualCount;
+            document.getElementById('totalCount').textContent = results.length;
+        }
+
+        function jumpToTimestamp(seconds) {
+            const video = document.getElementById('videoPlayer');
+            video.currentTime = seconds;
+            video.play();
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Enter key to search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+    </script>
+</body>
+</html>
