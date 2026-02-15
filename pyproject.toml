@@ -10,17 +10,16 @@ dependencies = [
     "transformers>=4.30.0",
     "faiss-cpu>=1.7.4",
     "numpy>=1.24.0",
-    
     # Data Collection
     "browser-history>=0.3.2",
     "pyperclip>=1.8.2",
     "Pillow>=10.0.0",
     "pywin32>=306 ; sys_platform == 'win32'",
-    
     # Google APIs (Calendar & Email)
     "google-api-python-client>=2.100.0",
     "google-auth-oauthlib>=1.0.0",
     "google-auth-httplib2>=0.2.0",
+    "easyocr>=1.7.2",
 ]
 
 [project.optional-dependencies]

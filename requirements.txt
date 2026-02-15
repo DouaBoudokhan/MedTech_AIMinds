@@ -19,3 +19,4 @@ google-auth-httplib2>=0.2.0
 
 # File monitoring
 watchdog==4.0.0
+pyperclip

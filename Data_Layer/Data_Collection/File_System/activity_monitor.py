@@ -255,6 +255,7 @@ if __name__ == "__main__":
         user_profile / "Documents",
         user_profile / "Desktop",
         user_profile / "Pictures" / "Camera Roll",
+        user_profile / "Pictures" / "Screenshots",
         user_profile / "Videos",
     ]
     start_monitoring(monitor_paths)

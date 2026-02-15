@@ -104,18 +104,37 @@ def fetch_visual_metadata_by_vector_id(vector_id: int):
     }
 
 
-def run_query_test(query: str, search_type: str, top_k: int):
+def run_query_test(query: str, search_type: str, top_k: int, source_filter: str = None):
     print("\n" + "=" * 72)
     print("🧪 Query vs Stored Embeddings Test")
     print("=" * 72)
     print(f"Query: {query}")
     print(f"Type: {search_type}")
     print(f"Top-K: {top_k}")
+    if source_filter:
+        print(f"Source filter: {source_filter}")
 
     manager = UnifiedStorageManager()
 
     print("\n🔍 Comparing query embedding with stored vectors...")
-    results = manager.search(query=query, top_k=top_k, search_type=search_type)
+    requested_k = top_k
+    if source_filter and search_type in ["text", "both"]:
+        requested_k = max(top_k * 10, top_k)
+
+    results = manager.search(query=query, top_k=requested_k, search_type=search_type)
+
+    if source_filter:
+        filtered = []
+        for result in results:
+            if result.get("type") != "text":
+                continue
+            meta = fetch_text_metadata_by_vector_id(result.get("vector_id", -1))
+            if meta and (meta.get("source", "").lower() == source_filter.lower()):
+                result["_cached_meta"] = meta
+                filtered.append(result)
+        results = filtered[:top_k]
+    else:
+        results = results[:top_k]
 
     if not results:
         print("\nNo results found.")
@@ -136,7 +155,7 @@ def run_query_test(query: str, search_type: str, top_k: int):
             if distance is not None:
                 print(f"    distance={distance:.4f}")
 
-            meta = fetch_text_metadata_by_vector_id(vector_id)
+            meta = result.get("_cached_meta") or fetch_text_metadata_by_vector_id(vector_id)
             if meta:
                 print(f"    source={meta['source']} | from={meta['kind']} | created_at={meta['created_at']}")
                 print(f"    preview={meta['preview']}")
@@ -161,12 +180,13 @@ def parse_args():
     parser.add_argument("--query", required=True, help="Query text to embed and search")
     parser.add_argument("--type", default="text", choices=["text", "visual", "both"], help="Search space")
     parser.add_argument("--top-k", type=int, default=5, help="Number of nearest results")
+    parser.add_argument("--source", default=None, help="Optional text source filter (e.g., browser, email, audio)")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    run_query_test(query=args.query, search_type=args.type, top_k=args.top_k)
+    run_query_test(query=args.query, search_type=args.type, top_k=args.top_k, source_filter=args.source)
 
 
 if __name__ == "__main__":

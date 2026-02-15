@@ -13,9 +13,11 @@ import json
 import sqlite3
 import traceback
 import hashlib
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
+from urllib.parse import urlparse, unquote
 import numpy as np
 import faiss
 
@@ -249,15 +251,23 @@ class TextVectorStore:
         # Load or create index
         if self.index_path.exists():
             self.index = faiss.read_index(str(self.index_path))
+            self.dimension = int(self.index.d)
             print(f"✅ Loaded text index: {self.index.ntotal} vectors")
         else:
             self.index = faiss.IndexFlatL2(dimension)
+            self.dimension = int(self.index.d)
             print(f"✅ Created new text index ({dimension}d)")
     
     def add(self, embeddings: np.ndarray) -> List[int]:
         """Add embeddings to index"""
         if embeddings.ndim == 1:
             embeddings = embeddings.reshape(1, -1)
+
+        if embeddings.shape[1] != self.index.d:
+            raise ValueError(
+                f"Text embedding dim mismatch: got {embeddings.shape[1]}d, "
+                f"index expects {self.index.d}d"
+            )
         
         start_id = self.index.ntotal
         self.index.add(embeddings.astype('float32'))
@@ -344,10 +354,38 @@ class UnifiedStorageManager:
         self.visual_store = VisualVectorStore()
         
         # Initialize embedding models
+        self._text_embedding_warning_shown = False
+        self._visual_embedding_warning_shown = False
+        self._text_embeddings_enabled = False
+        self._ingest_error_counts = {}
         self._init_embeddings()
+        self._validate_text_embedding_dimension()
         
         print("=" * 60)
         print("✅ Storage manager ready\n")
+
+    def _text_embeddings_ready(self) -> bool:
+        """Return whether text embeddings are available and compatible."""
+        if self.embeddings is not None and self._text_embeddings_enabled:
+            return True
+
+        if not self._text_embedding_warning_shown:
+            if self.embeddings is None:
+                print("❌ Text embeddings not initialized")
+            else:
+                print("❌ Text embeddings disabled (model/index dimension mismatch)")
+            self._text_embedding_warning_shown = True
+        return False
+
+    def _visual_embeddings_ready(self) -> bool:
+        """Return whether visual embeddings are available."""
+        if self.embeddings is not None:
+            return True
+
+        if not self._visual_embedding_warning_shown:
+            print("❌ Visual embeddings not initialized")
+            self._visual_embedding_warning_shown = True
+        return False
     
     def _init_embeddings(self):
         """Initialize embedding models"""
@@ -361,15 +399,113 @@ class UnifiedStorageManager:
             
             self.embeddings = EmbeddingManager()
             self.text_processor = TextProcessor()
+            self._text_embeddings_enabled = True
         except Exception as e:
             print(f"⚠️  Embeddings not available: {e}")
             self.embeddings = None
             self.text_processor = None
+            self._text_embeddings_enabled = False
+
+    def _validate_text_embedding_dimension(self):
+        """Ensure embedding output dimension matches loaded FAISS text index."""
+        if self.embeddings is None:
+            return
+
+        try:
+            probe = self.embeddings.encode_text("dimension probe")
+            embed_dim = int(probe.shape[1]) if probe.ndim == 2 else int(probe.shape[0])
+            index_dim = int(self.text_store.index.d)
+
+            if embed_dim != index_dim:
+                raise ValueError(
+                    "Text embedding dimension mismatch: "
+                    f"model produced {embed_dim}d but FAISS text index expects {index_dim}d. "
+                    "Your existing index was built with a different embedding model. "
+                    "Reset Data_Layer/Data_Storage/vector_store/text_index and metadata.db, then re-ingest."
+                )
+        except Exception as e:
+            print(f"⚠️  Text embeddings disabled: {e}")
+            self.text_processor = None
+            self._text_embeddings_enabled = False
 
     @staticmethod
     def _compute_hash(value: str) -> str:
         """Compute stable SHA256 hash"""
         return hashlib.sha256(value.encode('utf-8', errors='ignore')).hexdigest()
+
+    @staticmethod
+    def _normalize_text_for_embedding(text: str, max_chars: int = 2000) -> str:
+        """Normalize text to reduce embedding-model failures on noisy inputs."""
+        if text is None:
+            return ""
+
+        text = str(text)
+        text = text.replace("\x00", " ")
+        text = re.sub(r"[\x00-\x1f\x7f]", " ", text)
+        text = " ".join(text.split())
+        if len(text) > max_chars:
+            text = text[:max_chars]
+        return text
+
+    @staticmethod
+    def _compact_url_for_embedding(raw_url: str) -> str:
+        """Convert full URL into a compact semantic representation for embedding."""
+        if not raw_url:
+            return ""
+
+        raw_url = str(raw_url).strip()
+        parsed = urlparse(raw_url)
+
+        # Skip schemes that often contain high-entropy payloads
+        if parsed.scheme in {"data", "blob", "chrome-extension", "edge"}:
+            return ""
+
+        host = (parsed.netloc or "").lower()
+        path = unquote(parsed.path or "")
+        path = path.replace("/", " ").replace("-", " ").replace("_", " ")
+        path = re.sub(r"\s+", " ", path).strip()
+
+        compact = f"{host} {path}".strip()
+        return compact[:600]
+
+    @staticmethod
+    def _filter_noisy_tokens(text: str) -> str:
+        """Drop likely high-entropy tokens that can destabilize embedding calls."""
+        if not text:
+            return ""
+
+        kept = []
+        for token in text.split():
+            # Drop very long tokens (often hashes/base64/query blobs)
+            if len(token) > 80:
+                continue
+
+            # Drop symbol-heavy tokens
+            alnum_count = sum(ch.isalnum() for ch in token)
+            if len(token) >= 20 and alnum_count / max(len(token), 1) < 0.55:
+                continue
+
+            kept.append(token)
+
+        return " ".join(kept)
+
+    def _build_browser_search_text(self, item: Dict) -> str:
+        """Build robust browser text payload for embedding from browser record."""
+        title = self._normalize_text_for_embedding(item.get('title', ''), max_chars=500)
+        search_query = self._normalize_text_for_embedding(item.get('search_query', ''), max_chars=400)
+        url_compact = self._compact_url_for_embedding(item.get('url', ''))
+
+        parts = [p for p in [title, search_query, url_compact] if p]
+        text = " ".join(parts)
+        text = self._filter_noisy_tokens(text)
+        return self._normalize_text_for_embedding(text, max_chars=1000)
+
+    def _build_browser_fallback_text(self, item: Dict) -> str:
+        """Minimal fallback text for browser records if primary payload fails."""
+        title = self._normalize_text_for_embedding(item.get('title', ''), max_chars=280)
+        search_query = self._normalize_text_for_embedding(item.get('search_query', ''), max_chars=220)
+        text = " ".join(p for p in [title, search_query] if p)
+        return self._normalize_text_for_embedding(text, max_chars=500)
     
     def ingest_text(self, text: str, source: str, metadata: Dict = None) -> int:
         """
@@ -383,50 +519,66 @@ class UnifiedStorageManager:
         Returns:
             Memory item ID
         """
-        if self.embeddings is None:
-            print("❌ Embeddings not initialized")
+        if not self._text_embeddings_ready():
             return -1
 
-        # Deduplicate by source + normalized text
-        normalized = " ".join((text or "").split())
-        content_hash = self._compute_hash(f"{source}|{normalized}")
-        existing = self.metadata_store.get_memory_item_by_hash(content_hash)
-        if existing:
-            # If vector_id was never written (legacy data), repair it now
-            if existing.get('vector_id') is None:
+        # Skip empty content early
+        text = self._normalize_text_for_embedding(text)
+        if not text:
+            return -1
+
+        try:
+            # Deduplicate by source + normalized text
+            normalized = " ".join((text or "").split())
+            content_hash = self._compute_hash(f"{source}|{normalized}")
+            existing = self.metadata_store.get_memory_item_by_hash(content_hash)
+            if existing:
+                # If vector_id is missing (legacy/partial records), do not attempt
+                # synchronous repair here to avoid re-embedding stalls during ingestion.
+                return int(existing['id'])
+
+            # Add memory item
+            memory_id = self.metadata_store.add_memory_item(source, text, metadata, content_hash=content_hash)
+
+            # Check if chunking needed
+            if self.text_processor.should_chunk(text):
+                # Chunk text
+                chunks = self.text_processor.chunk_text(text)
+
+                for i, (chunk_text, start_pos, end_pos) in enumerate(chunks):
+                    # Encode chunk
+                    embedding = self.embeddings.encode_text(chunk_text)
+                    if not np.isfinite(embedding).all():
+                        raise ValueError("Non-finite values in chunk embedding")
+
+                    # Add to vector store
+                    vector_ids = self.text_store.add(embedding)
+
+                    # Add chunk to metadata
+                    self.metadata_store.add_chunk(memory_id, chunk_text, i, start_pos, end_pos, vector_ids[0])
+            else:
+                # Encode full text
                 embedding = self.embeddings.encode_text(text)
-                vector_ids = self.text_store.add(embedding)
-                self.metadata_store.update_memory_item_vector_id(int(existing['id']), vector_ids[0])
-            return int(existing['id'])
-        
-        # Add memory item
-        memory_id = self.metadata_store.add_memory_item(source, text, metadata, content_hash=content_hash)
-        
-        # Check if chunking needed
-        if self.text_processor.should_chunk(text):
-            # Chunk text
-            chunks = self.text_processor.chunk_text(text)
-            
-            for i, (chunk_text, start_pos, end_pos) in enumerate(chunks):
-                # Encode chunk
-                embedding = self.embeddings.encode_text(chunk_text)
-                
+                if not np.isfinite(embedding).all():
+                    raise ValueError("Non-finite values in text embedding")
+
                 # Add to vector store
                 vector_ids = self.text_store.add(embedding)
-                
-                # Add chunk to metadata
-                self.metadata_store.add_chunk(memory_id, chunk_text, i, start_pos, end_pos, vector_ids[0])
-        else:
-            # Encode full text
-            embedding = self.embeddings.encode_text(text)
-            
-            # Add to vector store
-            vector_ids = self.text_store.add(embedding)
-            
-            # Save vector_id back to memory_items so lookups work
-            self.metadata_store.update_memory_item_vector_id(memory_id, vector_ids[0])
-        
-        return memory_id
+
+                # Save vector_id back to memory_items so lookups work
+                self.metadata_store.update_memory_item_vector_id(memory_id, vector_ids[0])
+
+            return memory_id
+        except Exception as e:
+            key = f"{source}:{type(e).__name__}:{str(e)[:80]}"
+            seen = self._ingest_error_counts.get(key, 0) + 1
+            self._ingest_error_counts[key] = seen
+
+            if seen <= 3:
+                print(f"⚠️  Skipping text item from '{source}': {e}")
+            elif seen == 4:
+                print(f"⚠️  Further similar '{source}' errors suppressed...")
+            return -1
     
     def ingest_browser_data(self, json_path: str) -> int:
         """
@@ -443,6 +595,13 @@ class UnifiedStorageManager:
                 data = json.load(f)
             
             count = 0
+            skipped = 0
+            processed = 0
+            progress_every = 50
+
+            def _show_progress():
+                if processed and processed % progress_every == 0:
+                    print(f"   ⏳ Processed {processed} browser records (ok={count}, skipped={skipped})")
             
             # Handle nested structure: data["records_by_day"]["date"][items]
             if isinstance(data, dict) and 'records_by_day' in data:
@@ -454,31 +613,53 @@ class UnifiedStorageManager:
                     for item in records:
                         if not isinstance(item, dict):
                             continue
-                        # Combine title and URL for search
-                        text = f"{item.get('title', '')} {item.get('url', '')}"
+                        processed += 1
+                        text = self._build_browser_search_text(item)
+                        if not text:
+                            skipped += 1
+                            _show_progress()
+                            continue
                         
-                        # Add search query if available
-                        if 'search_query' in item and item['search_query']:
-                            text += f" {item['search_query']}"
-                        
-                        self.ingest_text(text, source='browser', metadata=item)
-                        count += 1
+                        memory_id = self.ingest_text(text, source='browser', metadata=item)
+                        if memory_id == -1:
+                            fallback_text = self._build_browser_fallback_text(item)
+                            if fallback_text:
+                                memory_id = self.ingest_text(fallback_text, source='browser', metadata=item)
+
+                        if memory_id != -1:
+                            count += 1
+                        else:
+                            skipped += 1
+                        _show_progress()
             
             # Handle flat list structure (backward compatibility)
             elif isinstance(data, list):
                 for item in data:
                     if not isinstance(item, dict):
                         continue
-                    text = f"{item.get('title', '')} {item.get('url', '')}"
+                    processed += 1
+                    text = self._build_browser_search_text(item)
+                    if not text:
+                        skipped += 1
+                        _show_progress()
+                        continue
                     
-                    if 'search_query' in item and item['search_query']:
-                        text += f" {item['search_query']}"
-                    
-                    self.ingest_text(text, source='browser', metadata=item)
-                    count += 1
+                    memory_id = self.ingest_text(text, source='browser', metadata=item)
+                    if memory_id == -1:
+                        fallback_text = self._build_browser_fallback_text(item)
+                        if fallback_text:
+                            memory_id = self.ingest_text(fallback_text, source='browser', metadata=item)
+
+                    if memory_id != -1:
+                        count += 1
+                    else:
+                        skipped += 1
+                    _show_progress()
             
             self.save()
             print(f"✅ Ingested {count} browser items from {Path(json_path).name}")
+            if skipped:
+                print(f"⚠️  Skipped {skipped} browser items from {Path(json_path).name}")
             return count
         
         except Exception as e:
@@ -498,8 +679,7 @@ class UnifiedStorageManager:
         Returns:
             Visual item ID
         """
-        if self.embeddings is None:
-            print("❌ Embeddings not initialized")
+        if not self._visual_embeddings_ready():
             return -1
         
         try:
@@ -544,17 +724,16 @@ class UnifiedStorageManager:
         Returns:
             List of results with scores
         """
-        if self.embeddings is None:
-            print("❌ Embeddings not initialized")
-            return []
-        
         results = []
-        visual_min_score = 0.22
+        visual_min_score = 0.28
         
         # Text search
         if search_type in ['text', 'both']:
-            query_embedding = self.embeddings.encode_text(query)
-            distances, indices = self.text_store.search(query_embedding, top_k)
+            if self._text_embeddings_ready():
+                query_embedding = self.embeddings.encode_text(query)
+                distances, indices = self.text_store.search(query_embedding, top_k)
+            else:
+                distances, indices = [], []
             
             for dist, idx in zip(distances, indices):
                 if idx >= 0:  # Valid index
@@ -570,8 +749,11 @@ class UnifiedStorageManager:
         
         # Visual search
         if search_type in ['visual', 'both']:
-            query_embedding = self.embeddings.encode_text_for_image_search(query)
-            scores, indices = self.visual_store.search(query_embedding, top_k)
+            if self._visual_embeddings_ready():
+                query_embedding = self.embeddings.encode_text_for_image_search(query)
+                scores, indices = self.visual_store.search(query_embedding, top_k)
+            else:
+                scores, indices = [], []
 
             best_by_path = {}
             for score, idx in zip(scores, indices):

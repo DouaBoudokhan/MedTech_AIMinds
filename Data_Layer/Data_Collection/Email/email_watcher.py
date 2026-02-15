@@ -8,7 +8,7 @@ import json
 import hashlib
 import base64
 import email
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import pickle
 from email.header import decode_header
@@ -23,7 +23,7 @@ from googleapiclient.discovery import build
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 TOKEN_FILE = 'token.pickle'
 CREDENTIALS_FILE = 'credentials.json'
-POLL_INTERVAL = 300  # Check every 5 minutes
+POLL_INTERVAL = 30  # Check every 30 seconds
 LOOKBACK_MINUTES = 10  # Look back 10 minutes for new emails
 DATA_STORAGE = Path(__file__).parent.parent.parent / "Data_Storage"
 EMAILS_DIR = DATA_STORAGE / "Email" / "emails"
@@ -36,6 +36,7 @@ class EmailWatcher:
     def __init__(self, base_dir: Path = None):
         """Initialize the email watcher."""
         self.base_dir = base_dir or Path(__file__).parent
+        self.project_root = Path(__file__).resolve().parents[3]
         self.emails_dir = EMAILS_DIR
         self.metadata_file = METADATA_FILE
         self.credentials_file = self.base_dir.parent / 'Calendar' / CREDENTIALS_FILE
@@ -174,7 +175,7 @@ class EmailWatcher:
             "timestamp": timestamp,
             "content_type": "email",
             "content_preview": f"{email_data['subject']} - from {email_data['from']}",
-            "file_path": str(email_path.relative_to(self.base_dir)),
+            "file_path": self._to_project_relative_path(email_path),
             "source": "gmail",
             "email_details": {
                 "subject": email_data['subject'],
@@ -191,6 +192,13 @@ class EmailWatcher:
         self._update_metadata(metadata_entry)
 
         return email_filename
+
+    def _to_project_relative_path(self, path: Path) -> str:
+        """Return a project-relative path string, fallback to absolute path."""
+        try:
+            return str(path.resolve().relative_to(self.project_root.resolve()))
+        except ValueError:
+            return str(path.resolve())
 
     def _update_metadata(self, entry):
         """Append entry to metadata.json."""
@@ -211,13 +219,13 @@ class EmailWatcher:
     def _fetch_emails(self):
         """Fetch emails from Gmail."""
         try:
-            # Calculate time range (last 10 minutes)
-            time_min = (datetime.utcnow() - timedelta(minutes=LOOKBACK_MINUTES)).isoformat() + 'Z'
+            now_utc = datetime.now(timezone.utc)
+            after_ts = int((now_utc - timedelta(minutes=LOOKBACK_MINUTES)).timestamp())
 
             # Search for emails in inbox
             results = self.service.users().messages().list(
                 userId='me',
-                q=f'after:{int((datetime.utcnow() - timedelta(minutes=LOOKBACK_MINUTES)).timestamp())}'
+                q=f'after:{after_ts}'
             ).execute()
 
             messages = results.get('messages', [])

@@ -28,6 +28,7 @@ class EmbeddingManager:
     VISUAL_MODEL = "openai/clip-vit-base-patch32"
     TEXT_DIM = 1024                # BGE-m3 output dimension
     VISUAL_DIM = 512
+    OLLAMA_TIMEOUT_SECONDS = 8.0
     
     def __init__(self, device: Optional[str] = None):
         """
@@ -55,7 +56,7 @@ class EmbeddingManager:
         except Exception:
             print(f"⚠️  Model '{self.TEXT_MODEL}' not found locally – pulling from Ollama…")
             _ollama_lib.pull(self.TEXT_MODEL)
-        self._ollama = _ollama_lib
+        self._ollama = _ollama_lib.Client(timeout=self.OLLAMA_TIMEOUT_SECONDS)
         print(f"✅ Text model ready (Ollama): {self.TEXT_MODEL} ({self.TEXT_DIM}d)")
         
         # ---------- Visual embeddings (unchanged) ----------
@@ -78,7 +79,15 @@ class EmbeddingManager:
             texts = [texts]
         
         # Ollama embed API accepts a list of inputs
-        response = self._ollama.embed(model=self.TEXT_MODEL, input=texts)
+        try:
+            response = self._ollama.embed(model=self.TEXT_MODEL, input=texts)
+        except Exception as e:
+            err = str(e)
+            if "unsupported value: NaN" in err:
+                raise
+            # Retry once with more conservative payload sizes
+            reduced = [str(t)[:600] for t in texts]
+            response = self._ollama.embed(model=self.TEXT_MODEL, input=reduced)
         embeddings = np.array(response["embeddings"], dtype=np.float32)
         
         if normalize:
