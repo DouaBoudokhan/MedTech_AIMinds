@@ -12,6 +12,7 @@ Storage architecture:
 import json
 import sqlite3
 import traceback
+import hashlib
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
@@ -71,7 +72,8 @@ class SQLiteMetadataStore:
                 content TEXT NOT NULL,
                 metadata TEXT,
                 created_at TEXT NOT NULL,
-                vector_id INTEGER
+                vector_id INTEGER,
+                content_hash TEXT
             )
         """)
         
@@ -97,24 +99,39 @@ class SQLiteMetadataStore:
                 ocr_text TEXT,
                 metadata TEXT,
                 created_at TEXT NOT NULL,
-                vector_id INTEGER
+                vector_id INTEGER,
+                image_hash TEXT
             )
         """)
+
+        # Backward-compatible migrations for existing DBs
+        try:
+            cursor.execute("ALTER TABLE memory_items ADD COLUMN content_hash TEXT")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            cursor.execute("ALTER TABLE visual_items ADD COLUMN image_hash TEXT")
+        except sqlite3.OperationalError:
+            pass
         
         # Create indices
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_source ON memory_items(source)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_created ON memory_items(created_at)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_memory_chunks ON chunks(memory_item_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_memory_content_hash ON memory_items(content_hash)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_visual_image_hash ON visual_items(image_hash)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_visual_vector_id ON visual_items(vector_id)")
         
         self.conn.commit()
     
-    def add_memory_item(self, source: str, content: str, metadata: Dict = None) -> int:
+    def add_memory_item(self, source: str, content: str, metadata: Dict = None, content_hash: str = None) -> int:
         """Add memory item"""
         cursor = self.conn.cursor()
         cursor.execute("""
-            INSERT INTO memory_items (source, content, metadata, created_at)
-            VALUES (?, ?, ?, ?)
-        """, (source, content, json.dumps(metadata) if metadata else None, datetime.now().isoformat()))
+            INSERT INTO memory_items (source, content, metadata, created_at, content_hash)
+            VALUES (?, ?, ?, ?, ?)
+        """, (source, content, json.dumps(metadata) if metadata else None, datetime.now().isoformat(), content_hash))
         
         self.conn.commit()
         return cursor.lastrowid
@@ -131,16 +148,43 @@ class SQLiteMetadataStore:
         self.conn.commit()
         return cursor.lastrowid
     
-    def add_visual_item(self, path: str, ocr_text: str = None, metadata: Dict = None, vector_id: int = None) -> int:
+    def add_visual_item(self, path: str, ocr_text: str = None, metadata: Dict = None, vector_id: int = None, image_hash: str = None) -> int:
         """Add visual item"""
         cursor = self.conn.cursor()
         cursor.execute("""
-            INSERT INTO visual_items (path, ocr_text, metadata, created_at, vector_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, (path, ocr_text, json.dumps(metadata) if metadata else None, datetime.now().isoformat(), vector_id))
+            INSERT INTO visual_items (path, ocr_text, metadata, created_at, vector_id, image_hash)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (path, ocr_text, json.dumps(metadata) if metadata else None, datetime.now().isoformat(), vector_id, image_hash))
         
         self.conn.commit()
         return cursor.lastrowid
+
+    def get_memory_item_by_hash(self, content_hash: str) -> Optional[Dict]:
+        """Get memory item by dedup hash"""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM memory_items WHERE content_hash = ? LIMIT 1", (content_hash,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+        return None
+
+    def get_visual_item_by_hash(self, image_hash: str) -> Optional[Dict]:
+        """Get visual item by dedup hash"""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM visual_items WHERE image_hash = ? LIMIT 1", (image_hash,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+        return None
+
+    def get_visual_item_by_vector_id(self, vector_id: int) -> Optional[Dict]:
+        """Get visual item by vector ID"""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM visual_items WHERE vector_id = ? LIMIT 1", (vector_id,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+        return None
     
     def get_memory_item(self, item_id: int) -> Optional[Dict]:
         """Get memory item by ID"""
@@ -315,6 +359,11 @@ class UnifiedStorageManager:
             print(f"⚠️  Embeddings not available: {e}")
             self.embeddings = None
             self.text_processor = None
+
+    @staticmethod
+    def _compute_hash(value: str) -> str:
+        """Compute stable SHA256 hash"""
+        return hashlib.sha256(value.encode('utf-8', errors='ignore')).hexdigest()
     
     def ingest_text(self, text: str, source: str, metadata: Dict = None) -> int:
         """
@@ -331,9 +380,16 @@ class UnifiedStorageManager:
         if self.embeddings is None:
             print("❌ Embeddings not initialized")
             return -1
+
+        # Deduplicate by source + normalized text
+        normalized = " ".join((text or "").split())
+        content_hash = self._compute_hash(f"{source}|{normalized}")
+        existing = self.metadata_store.get_memory_item_by_hash(content_hash)
+        if existing:
+            return int(existing['id'])
         
         # Add memory item
-        memory_id = self.metadata_store.add_memory_item(source, text, metadata)
+        memory_id = self.metadata_store.add_memory_item(source, text, metadata, content_hash=content_hash)
         
         # Check if chunking needed
         if self.text_processor.should_chunk(text):
@@ -433,14 +489,24 @@ class UnifiedStorageManager:
             return -1
         
         try:
+            image_path_resolved = str(Path(image_path).resolve())
+            image_file = Path(image_path_resolved)
+            stat = image_file.stat()
+            image_hash = self._compute_hash(f"{image_path_resolved}|{stat.st_size}|{int(stat.st_mtime)}")
+
+            # Deduplicate image ingestion by path+file state
+            existing = self.metadata_store.get_visual_item_by_hash(image_hash)
+            if existing:
+                return int(existing['id'])
+
             # Encode image
-            embedding = self.embeddings.encode_image(image_path)
+            embedding = self.embeddings.encode_image(image_path_resolved)
             
             # Add to visual store
             vector_ids = self.visual_store.add(embedding)
             
             # Add to metadata
-            visual_id = self.metadata_store.add_visual_item(image_path, ocr_text, metadata, vector_ids[0])
+            visual_id = self.metadata_store.add_visual_item(image_path_resolved, ocr_text, metadata, vector_ids[0], image_hash=image_hash)
             
             # If OCR text available, also add to text store
             if ocr_text:
@@ -469,6 +535,7 @@ class UnifiedStorageManager:
             return []
         
         results = []
+        visual_min_score = 0.22
         
         # Text search
         if search_type in ['text', 'both']:
@@ -491,14 +558,28 @@ class UnifiedStorageManager:
         if search_type in ['visual', 'both']:
             query_embedding = self.embeddings.encode_text_for_image_search(query)
             scores, indices = self.visual_store.search(query_embedding, top_k)
-            
+
+            best_by_path = {}
             for score, idx in zip(scores, indices):
                 if idx >= 0:  # Valid index
-                    results.append({
+                    score = float(score)
+                    if score < visual_min_score:
+                        continue
+
+                    visual_item = self.metadata_store.get_visual_item_by_vector_id(int(idx))
+                    path_key = visual_item['path'] if visual_item and visual_item.get('path') else f"vector:{int(idx)}"
+
+                    current = best_by_path.get(path_key)
+                    candidate = {
                         'vector_id': int(idx),
-                        'score': float(score),
+                        'score': score,
                         'type': 'visual'
-                    })
+                    }
+
+                    if current is None or score > current['score']:
+                        best_by_path[path_key] = candidate
+
+            results.extend(best_by_path.values())
         
         # Sort by score
         results.sort(key=lambda x: x['score'], reverse=True)

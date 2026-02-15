@@ -49,3 +49,11 @@
     "full_path": "C:\\Users\\USER\\Downloads\\xr\\xr_seance1",
     "content_type": "file"
 }
+{
+    "timestamp": "2026-02-15 02:34:12",
+    "event_type": "CREATED",
+    "filename": "quote.jpg",
+    "file_extension": ".jpg",
+    "full_path": "C:\\Users\\USER\\Desktop\\quote.jpg",
+    "content_type": "image"
+}

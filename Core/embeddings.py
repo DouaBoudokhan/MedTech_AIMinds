@@ -142,9 +142,18 @@ class EmbeddingManager:
         
         with torch.no_grad():
             text_features = self.clip_model.get_text_features(**inputs)
+
+            # Compatibility: some environments may return model outputs instead of tensor
+            if not isinstance(text_features, torch.Tensor):
+                if hasattr(text_features, 'pooler_output'):
+                    text_features = text_features.pooler_output
+                elif hasattr(text_features, 'last_hidden_state'):
+                    text_features = text_features.last_hidden_state[:, 0, :]
+                else:
+                    raise TypeError(f"Unexpected CLIP text feature output type: {type(text_features)}")
         
         # Convert to numpy
-        embeddings = text_features.cpu().numpy()
+        embeddings = text_features.detach().cpu().numpy()
         
         # Normalize if requested
         if normalize:
