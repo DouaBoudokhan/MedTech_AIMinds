@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Search - Working Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .search-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1.1em;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-box button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .video-section {
+            margin-bottom: 30px;
+        }
+
+        .video-container {
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        video {
+            width: 100%;
+            display: block;
+        }
+
+        .video-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .results-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        .results-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .result-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .timestamp {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .text {
+            color: #333;
+            font-size: 1em;
+            line-height: 1.5;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #28a745;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .info-box strong {
+            color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 Video Search with Timestamp Jumping</h1>
+            <p>Search any word → Video jumps to that exact second!</p>
+        </div>
+
+        <div class="content">
+            <div class="info-box">
+                <strong>Instructions:</strong>
+                1. Upload a video and its JSON index file
+                2. Type a word to search (e.g., "hello")
+                3. Click any result → Video jumps to that timestamp!
+            </div>
+
+            <div class="upload-section">
+                <p style="margin-bottom: 15px;"><strong>Step 1:</strong> Upload your video files</p>
+                <label class="upload-btn">
+                    📁 Choose Video File
+                    <input type="file" id="videoInput" accept="video/*">
+                </label>
+                <span style="margin: 0 15px;">or</span>
+                <label class="upload-btn" style="background: #667eea;">
+                    📄 Load voice_index.json (Demo)
+                    <input type="file" id="jsonInput" accept=".json">
+                </label>
+            </div>
+
+            <div class="video-section">
+                <div class="video-container">
+                    <video id="videoPlayer" controls>
+                        <source src="" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                <div class="video-info">
+                    <div id="videoName">No video loaded</div>
+                    <div id="videoDuration">Duration: --:--</div>
+                </div>
+            </div>
+
+            <div class="search-section">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search for a word (e.g., 'hello', 'thank', 'appreciate')...">
+                    <button onclick="performSearch()">🔍 Search</button>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h3>📍 Search Results</h3>
+                <div id="resultsList">
+                    <div class="no-results">
+                        <p>Upload a video and JSON index, then search for any word!</p>
+                        <p style="font-size: 0.9em; margin-top: 10px;">
+                            Try searching: "hello", "thank", "much", "appreciate"
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let videoIndex = null;
+        let videoPath = '';
+
+        // Load demo JSON (voice_index.json)
+        document.getElementById('jsonInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    videoIndex = JSON.parse(e.target.result);
+                    console.log('Index loaded:', videoIndex);
+
+                    // Show results count
+                    document.getElementById('resultsList').innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <p style="color: #28a745; font-size: 1.1em; font-weight: bold;">
+                                ✅ Index loaded successfully!
+                            </p>
+                            <p style="margin-top: 10px;">
+                                Video: ${videoIndex.video_name}<br>
+                                Language: ${videoIndex.language}<br>
+                                Segments: ${videoIndex.segments.length}<br>
+                                Text length: ${videoIndex.text.length} characters
+                            </p>
+                            <p style="margin-top: 15px; color: #666;">
+                                Now upload the video file: ${videoIndex.video_name}
+                            </p>
+                        </div>
+                    `;
+                } catch (err) {
+                    alert('Error loading JSON: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Load video file
+        document.getElementById('videoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const url = URL.createObjectURL(file);
+            const video = document.getElementById('videoPlayer');
+            video.src = url;
+
+            video.addEventListener('loadedmetadata', function() {
+                const duration = video.duration;
+                const minutes = Math.floor(duration / 60);
+                const seconds = Math.floor(duration % 60);
+
+                document.getElementById('videoName').textContent = file.name;
+                document.getElementById('videoDuration').textContent =
+                    `Duration: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            });
+        });
+
+        // Search functionality
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            if (!query) {
+                alert('Please enter a search word');
+                return;
+            }
+
+            if (!videoIndex) {
+                alert('Please load the JSON index file first!');
+                return;
+            }
+
+            // Search in segments
+            const results = [];
+
+            for (const segment of videoIndex.segments) {
+                if (segment.text.toLowerCase().includes(query)) {
+                    results.push({
+                        start: segment.start,
+                        end: segment.end,
+                        text: segment.text.trim()
+                    });
+                }
+            }
+
+            displayResults(results, query);
+        }
+
+        function displayResults(results, query) {
+            const resultsList = document.getElementById('resultsList');
+
+            if (results.length === 0) {
+                resultsList.innerHTML = `
+                    <div class="no-results">
+                        <p>No matches found for "${query}"</p>
+                        <p style="font-size: 0.9em; margin-top: 10px;">
+                            Try other words like: "hello", "thank", "much", "effort"
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            resultsList.innerHTML = results.map(result => `
+                <div class="result-item" onclick="jumpToTimestamp(${result.start})">
+                    <div class="timestamp">${formatTime(result.start)}</div>
+                    <div class="text">
+                        <strong>Found:</strong> "${query}"<br>
+                        <em style="color: #666;">${result.text}</em>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button class="btn-small" onclick="event.stopPropagation(); jumpToTimestamp(${result.start})">
+                            ▶️ Jump to ${formatTime(result.start)}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Auto-jump to first result
+            if (results.length > 0) {
+                setTimeout(() => {
+                    jumpToTimestamp(results[0].start);
+                }, 500);
+            }
+        }
+
+        function jumpToTimestamp(seconds) {
+            const video = document.getElementById('videoPlayer');
+            video.currentTime = seconds;
+            video.play();
+
+            // Highlight the moment
+            video.style.boxShadow = "0 0 20px rgba(102, 126, 234, 0.8)";
+            setTimeout(() => {
+                video.style.boxShadow = "none";
+            }, 2000);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Enter key to search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Demo mode - auto-load if voice.mp4 exists
+        window.addEventListener('load', function() {
+            // Check if demo files exist
+            fetch('voice_index.json')
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('File not found');
+                })
+                .then(data => {
+                    videoIndex = data;
+                    console.log('Demo index loaded');
+
+                    // Try to load video
+                    const video = document.getElementById('videoPlayer');
+                    video.src = 'voice.mp4';
+
+                    document.getElementById('videoName').textContent = 'voice.mp4 (Demo)';
+
+                    video.addEventListener('loadedmetadata', function() {
+                        const duration = video.duration;
+                        const minutes = Math.floor(duration / 60);
+                        const seconds = Math.floor(duration % 60);
+                        document.getElementById('videoDuration').textContent =
+                            `Duration: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    });
+
+                    document.getElementById('resultsList').innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <p style="color: #28a745; font-size: 1.1em; font-weight: bold;">
+                                ✅ Demo loaded successfully!
+                            </p>
+                            <p style="margin-top: 10px;">
+                                Try searching: "hello", "thank", "much", "appreciate"
+                            </p>
+                        </div>
+                    `;
+                })
+                .catch(err => {
+                    console.log('Demo mode not available');
+                });
+        });
+    </script>
+</body>
+</html>
