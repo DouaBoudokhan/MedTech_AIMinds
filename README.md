@@ -237,7 +237,7 @@ python concierge.py
 
 ## Module Details
 
-### Browser (by Roua)
+### Browser
 Extracts browsing history from major browsers for search and discovery.
 
 **Features:**
@@ -245,7 +245,7 @@ Extracts browsing history from major browsers for search and discovery.
 - History extraction with timestamps
 - URL and title metadata
 
-### File_System (by Roua)
+### File_System
 Monitors file system activity and document access patterns.
 
 **Features:**
@@ -253,7 +253,7 @@ Monitors file system activity and document access patterns.
 - Document access tracking
 - Activity logging
 
-### Clipboard (by Sarra)
+### Clipboard
 Monitors clipboard for copied content and automatically captures it.
 
 **Features:**
@@ -264,7 +264,7 @@ Monitors clipboard for copied content and automatically captures it.
 - 5-second deduplication window
 - Silent background operation
 
-### Calendar (by Sarra)
+### Calendar
 Monitors Google Calendar for upcoming events and meetings.
 
 **Features:**
@@ -277,7 +277,7 @@ Monitors Google Calendar for upcoming events and meetings.
 
 **Setup:** See [Data_Layer/Data_Collection/Calendar/README.md](Data_Layer/Data_Collection/Calendar/README.md) for Google Cloud setup instructions.
 
-### Email (by Sarra)
+### Email
 Monitors Gmail for new emails and captures them automatically.
 
 **Features:**
