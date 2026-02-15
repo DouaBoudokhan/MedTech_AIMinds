@@ -37,3 +37,4 @@ Thumbs.db
 
 # Environment variables
 .env
+Data_Layer/Data_Storage/File_System.json
