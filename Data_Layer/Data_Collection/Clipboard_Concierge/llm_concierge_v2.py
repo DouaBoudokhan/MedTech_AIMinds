@@ -3,6 +3,7 @@
 """Real LLM-powered Clipboard Concierge using better models.
 
 Uses Microsoft Phi-2 (2.7B params) - much smarter than GPT-2!
+NOW WITH ACTION EXECUTION - Agent that actually does things!
 """
 import json
 import time
@@ -20,17 +21,21 @@ except ImportError:
     TRANSFORMERS_AVAILABLE = False
     print("[LLM] transformers not installed. Run: pip install transformers torch")
 
+# Import ActionExecutor
+from action_executor import ActionExecutor
+
 # Configuration
 CLIPBOARD_METADATA = Path(__file__).parent.parent.parent / "Data_Storage" / "Clipboard" / "metadata.json"
 BEHAVIOR_TRACKER = Path(__file__).parent.parent.parent / "Data_Storage" / "Clipboard_Concierge" / "behavior.json"
 POLL_INTERVAL = 2
 
-# Set UTF-8 encoding for Windows console
-if sys.platform == 'win32':
+# Set UTF-8 encoding for Windows console (only if not already wrapped)
+if sys.platform == 'win32' and hasattr(sys.stdout, 'buffer'):
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-    sys.stdout.reconfigure(line_buffering=True)
+    if not isinstance(sys.stdout, io.TextIOWrapper):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    if not isinstance(sys.stderr, io.TextIOWrapper):
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 
 class BetterLLMClassifier:
@@ -91,8 +96,17 @@ class BetterLLMClassifier:
 
     def _llm_classify(self, content: str) -> Dict:
         """Use LLM to classify content."""
-        # Create a classification prompt
-        prompt = f"""Classify this clipboard text and determine the intent.
+        # Create a classification prompt with few-shot examples
+        prompt = f"""Classify this clipboard text.
+
+Examples:
+"forgot dentist" → reminder
+"ERROR: ValueError" → error
+"meeting tomorrow 3pm" → calendar
+"call john 0612345678" → contact
+"how to install python" → search
+"C:/Users/file.txt" → file
+"hello world" → none
 
 Text: "{content}"
 
@@ -137,10 +151,12 @@ Intent:"""
         intent_map = {
             'calendar': ('calendar', ['create_calendar_event', 'set_reminder']),
             'reminder': ('reminder', ['create_reminder', 'add_to_todo_list']),
-            'error': ('error', ['search_stackoverflow', 'search_google']),
-            'search': ('search', ['search_google', 'search_wikipedia']),
-            'contact': ('contact', ['save_contact', 'call_contact']),
+            'error': ('error', ['search_stackoverflow', 'search_github', 'search_google']),
+            'search': ('search', ['search_google', 'search_youtube', 'search_wikipedia']),
+            'contact': ('contact', ['save_contact', 'call_contact', 'send_email']),
             'file': ('file', ['open_file', 'show_in_folder']),
+            'url': ('url', ['open_url']),
+            'note': ('note', ['save_note']),
             'none': ('none', []),
         }
 
@@ -162,6 +178,16 @@ Intent:"""
         import re
         content_lower = content.lower()
 
+        # Check for URLs
+        if re.match(r'^https?://', content.strip()):
+            return {
+                'intent': 'url',
+                'confidence': 0.95,
+                'reasoning': 'Detected URL',
+                'suggested_actions': ['open_url'],
+                'method': 'smart_fallback'
+            }
+
         # Check for keywords
         if any(kw in content_lower for kw in ['forgot', 'remember', 'reminder', 'rendez', 'appointment']):
             return {
@@ -177,7 +203,7 @@ Intent:"""
                 'intent': 'error',
                 'confidence': 0.85,
                 'reasoning': 'Detected error keywords',
-                'suggested_actions': ['search_stackoverflow', 'search_google'],
+                'suggested_actions': ['search_stackoverflow', 'search_github', 'search_google'],
                 'method': 'smart_fallback'
             }
 
@@ -199,12 +225,32 @@ Intent:"""
                 'method': 'smart_fallback'
             }
 
+        # Check for note keywords
+        if any(kw in content_lower for kw in ['note:', 'remember to', 'don\'t forget', 'todo:', 'task:']):
+            return {
+                'intent': 'note',
+                'confidence': 0.75,
+                'reasoning': 'Detected note/todo pattern',
+                'suggested_actions': ['save_note', 'add_to_todo_list'],
+                'method': 'smart_fallback'
+            }
+
+        # Check for math expressions
+        if re.match(r'^[\d\s\+\-\*\/\(\)\.]+$', content.strip()):
+            return {
+                'intent': 'search',
+                'confidence': 0.70,
+                'reasoning': 'Detected math expression',
+                'suggested_actions': ['search_google'],
+                'method': 'smart_fallback'
+            }
+
         if content.strip().endswith('?'):
             return {
                 'intent': 'search',
                 'confidence': 0.75,
                 'reasoning': 'Detected question format',
-                'suggested_actions': ['search_google'],
+                'suggested_actions': ['search_google', 'search_youtube'],
                 'method': 'smart_fallback'
             }
 
@@ -231,7 +277,7 @@ Intent:"""
 
 
 class BetterLLMConcierge:
-    """Better LLM-powered clipboard concierge."""
+    """Better LLM-powered clipboard concierge with action execution."""
 
     def __init__(self):
         """Initialize the better LLM concierge."""
@@ -241,6 +287,10 @@ class BetterLLMConcierge:
         self.behavior_data = self._load_behavior()
         self.processed_clipboard_ids = set()
         self._setup_directories()
+
+        # Initialize ActionExecutor
+        self.executor = ActionExecutor()
+        print("[BetterLLM] Action Executor initialized - ready to execute actions!")
 
     def _setup_directories(self):
         """Create necessary directories."""
@@ -295,7 +345,7 @@ class BetterLLMConcierge:
         self._save_behavior()
 
     def process_clipboard_entry(self, entry: Dict):
-        """Process a clipboard entry with LLM."""
+        """Process a clipboard entry with LLM and offer to execute actions."""
         clipboard_id = entry.get('id')
         content_preview = entry.get('content_preview', '')
         content_type = entry.get('content_type', 'text')
@@ -331,6 +381,7 @@ class BetterLLMConcierge:
             'search_stackoverflow': 'Search Stack Overflow',
             'search_google': 'Google Search',
             'search_github': 'Search GitHub',
+            'search_youtube': 'Search YouTube',
             'search_wikipedia': 'Wikipedia',
             'open_file': 'Open File',
             'show_in_folder': 'Show in Folder',
@@ -338,18 +389,54 @@ class BetterLLMConcierge:
             'save_contact': 'Save Contact',
             'send_email': 'Send Email',
             'add_to_todo_list': 'Add to Todo',
+            'save_note': 'Save Note',
             'open_url': 'Open URL',
             'call_contact': 'Call Contact',
         }
 
-        for action in actions[:5]:
+        # Display numbered actions
+        for i, action in enumerate(actions[:5], 1):
             label = action_labels.get(action, action)
-            print(f"   🤖 {label}", flush=True)
+            print(f"   {i}. 🤖 {label}", flush=True)
+
+        # Offer to execute actions
+        if actions and confidence > 0.7:
+            print(f"\n>>> Execute action? (1-{len(actions)}/n/s=skip) ", end='', flush=True)
+            try:
+                response = input().strip().lower()
+
+                if response == 'n' or response == 's' or response == 'skip':
+                    print(">>> Skipped", flush=True)
+                elif response.isdigit() and 1 <= int(response) <= len(actions):
+                    # User selected a specific action
+                    selected_idx = int(response) - 1
+                    selected_action = actions[selected_idx]
+                    print(f">>> Executing: {action_labels.get(selected_action, selected_action)}", flush=True)
+                    self.executor.execute_action(
+                        selected_action,
+                        content_preview,
+                        confidence,
+                        auto_execute=False
+                    )
+                elif response == 'y':
+                    # Default to first action
+                    print(f">>> Executing: {action_labels.get(actions[0], actions[0])}", flush=True)
+                    self.executor.execute_action(
+                        actions[0],
+                        content_preview,
+                        confidence,
+                        auto_execute=False
+                    )
+                else:
+                    print(">>> Skipped", flush=True)
+            except (EOFError, KeyboardInterrupt):
+                print("\n>>> Skipped", flush=True)
 
     def monitor(self):
-        """Monitor clipboard with LLM."""
+        """Monitor clipboard with LLM and execute actions."""
         print("="*70, flush=True)
         print("LLM-POWERED CLIPBOARD CONCIERGE (Phi-2, 2.7B params)", flush=True)
+        print("WITH ACTION EXECUTION - Agent that does things!", flush=True)
         print("="*70, flush=True)
         print(f"[BetterLLM] Using PyTorch: {torch.__version__}", flush=True)
         print(f"[BetterLLM] Press Ctrl+C to stop\n", flush=True)

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Start LLM-POWERED clipboard monitoring with intelligent suggestions.
+Start LLM-POWERED Clipboard Concierge Agent.
 
-Uses GPT-2 (124M params) for actual AI-powered clipboard analysis.
+This is now a TRUE AGENT that executes actions, not just suggests them!
+Uses Microsoft Phi-2 (2.7B params) for AI-powered clipboard analysis.
 """
 
 import subprocess
@@ -11,7 +12,8 @@ import time
 from pathlib import Path
 
 print("="*70)
-print("  LLM-POWERED CLIPBOARD CONCIERGE")
+print("  LLM-POWERED CLIPBOARD CONCIERGE AGENT")
+print("  (Now executes actions - not just suggestions!)")
 print("="*70)
 print()
 
@@ -33,8 +35,8 @@ watcher_process = subprocess.Popen(
 
 time.sleep(2)
 
-print("Step 2: Starting Better LLM Concierge (Phi-2, 2.7B params)...")
-print("Loading model... (first run: ~2 minutes, downloads ~2.8GB)")
+print("Step 2: Starting Clipboard Concierge Agent...")
+print("Loading Phi-2 model... (first run: ~2 minutes, downloads ~2.8GB)")
 print()
 
 # Start LLM concierge
@@ -47,8 +49,21 @@ time.sleep(5)
 
 print()
 print("="*70)
-print("SYSTEM READY - Copy anything to your clipboard!")
+print("AGENT READY - Copy anything to your clipboard!")
 print("="*70)
+print()
+print("Features:")
+print("  ✓ LLM classification (Phi-2, 2.7B params)")
+print("  ✓ Multiple action suggestions - choose which to execute")
+print("  ✓ Windows toast notifications for reminders")
+print("  ✓ Auto-learns your preferences")
+print()
+print("Try copying:")
+print("  • 'ERROR: ValueError' → Search Stack Overflow")
+print("  • 'forgot dentist' → Set reminder")
+print("  • 'meeting tomorrow 3pm' → Add to calendar")
+print("  • 'https://youtube.com' → Open URL")
+print("  • 'note: buy milk' → Save note")
 print()
 print("Press Ctrl+C to stop")
 print("="*70)
