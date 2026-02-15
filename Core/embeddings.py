@@ -3,7 +3,7 @@ Embedding Manager - Text and Visual Embeddings
 ===============================================
 
 Handles initialization and encoding for:
-- Text: Sentence-Transformers (paraphrase-multilingual-MiniLM-L12-v2)
+- Text: BGE-m3 via Ollama (1024d)
 - Images: CLIP (openai/clip-vit-base-patch32)
 """
 
@@ -12,17 +12,21 @@ import numpy as np
 import torch
 from pathlib import Path
 from PIL import Image
-from sentence_transformers import SentenceTransformer
 from transformers import CLIPProcessor, CLIPModel
+
+try:
+    import ollama as _ollama_lib
+except ImportError:
+    _ollama_lib = None
 
 
 class EmbeddingManager:
     """Unified manager for text and visual embeddings"""
     
     # Model configurations
-    TEXT_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+    TEXT_MODEL = "bge-m3"          # Served by Ollama
     VISUAL_MODEL = "openai/clip-vit-base-patch32"
-    TEXT_DIM = 384
+    TEXT_DIM = 1024                # BGE-m3 output dimension
     VISUAL_DIM = 512
     
     def __init__(self, device: Optional[str] = None):
@@ -39,35 +43,47 @@ class EmbeddingManager:
             
         print(f"🔧 Initializing embeddings on {self.device}...")
         
-        # Text embeddings
-        self.text_model = SentenceTransformer(self.TEXT_MODEL, device=self.device)
-        print(f"✅ Text model loaded: {self.TEXT_MODEL} ({self.TEXT_DIM}d)")
+        # ---------- Text embeddings via Ollama ----------
+        if _ollama_lib is None:
+            raise ImportError(
+                "The 'ollama' Python package is required.  "
+                "Install it with:  pip install ollama"
+            )
+        # Verify that the BGE model is available in Ollama
+        try:
+            _ollama_lib.show(self.TEXT_MODEL)
+        except Exception:
+            print(f"⚠️  Model '{self.TEXT_MODEL}' not found locally – pulling from Ollama…")
+            _ollama_lib.pull(self.TEXT_MODEL)
+        self._ollama = _ollama_lib
+        print(f"✅ Text model ready (Ollama): {self.TEXT_MODEL} ({self.TEXT_DIM}d)")
         
-        # Visual embeddings
+        # ---------- Visual embeddings (unchanged) ----------
         self.clip_model = CLIPModel.from_pretrained(self.VISUAL_MODEL).to(self.device)
         self.clip_processor = CLIPProcessor.from_pretrained(self.VISUAL_MODEL)
         print(f"✅ Visual model loaded: {self.VISUAL_MODEL} ({self.VISUAL_DIM}d)")
     
     def encode_text(self, texts: Union[str, List[str]], normalize: bool = True) -> np.ndarray:
         """
-        Encode text(s) into embeddings
+        Encode text(s) into embeddings via Ollama BGE-m3
         
         Args:
             texts: Single text or list of texts
             normalize: Normalize embeddings to unit length
             
         Returns:
-            numpy array of shape (n, 384) for text embeddings
+            numpy array of shape (n, 1024) for text embeddings
         """
         if isinstance(texts, str):
             texts = [texts]
         
-        embeddings = self.text_model.encode(
-            texts,
-            normalize_embeddings=normalize,
-            show_progress_bar=False,
-            convert_to_numpy=True
-        )
+        # Ollama embed API accepts a list of inputs
+        response = self._ollama.embed(model=self.TEXT_MODEL, input=texts)
+        embeddings = np.array(response["embeddings"], dtype=np.float32)
+        
+        if normalize:
+            norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+            embeddings = embeddings / (norms + 1e-8)
         
         return embeddings
     
@@ -169,11 +185,11 @@ def test_embeddings():
     
     manager = EmbeddingManager()
     
-    # Test text embeddings
-    print("\n📝 Text Embeddings:")
+    # Test text embeddings (Ollama BGE-m3)
+    print("\n📝 Text Embeddings (BGE-m3 via Ollama):")
     texts = ["Hello world", "Bonjour le monde"]
     text_embeds = manager.encode_text(texts)
-    print(f"Shape: {text_embeds.shape}")
+    print(f"Shape: {text_embeds.shape}  (expected: (2, 1024))")
     print(f"Sample: {text_embeds[0][:5]}")
     
     # Test CLIP text embeddings

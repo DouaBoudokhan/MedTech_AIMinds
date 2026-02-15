@@ -11,9 +11,13 @@ Ingests all collected data from Data_Storage into FAISS + SQLite
 """
 
 import json
+import sys
 from pathlib import Path
 from datetime import datetime
 from Data_Layer.storage_manager import UnifiedStorageManager
+
+sys.path.insert(0, str(Path(__file__).parent / "Core"))
+from image_processor import ImageProcessor
 
 
 class DataIngestionPipeline:
@@ -29,6 +33,7 @@ class DataIngestionPipeline:
         
         self.storage_dir = Path("Data_Layer/Data_Storage")
         self.manager = UnifiedStorageManager()
+        self.image_processor = ImageProcessor(ocr_engine="easyocr")
         self.total_ingested = 0
     
     def ingest_browser_data(self):
@@ -96,18 +101,23 @@ class DataIngestionPipeline:
 
                 is_image = file_extension in self.IMAGE_EXTENSIONS or content_type == 'image'
 
-                # Treat image events as visual items (no text embedding for image path events)
+                # Treat image events as visual items + optional OCR text
                 if is_image:
                     image_path = item.get('destination_path') or item.get('full_path')
 
                     # Only ingest image if file still exists (CREATED/DOWNLOADED typically)
                     if image_path and Path(image_path).exists() and event_type != 'DELETED':
+                        # Run OCR to extract text from image (returns "" if none found)
+                        ocr_text = self.image_processor.extract_text(str(image_path))
                         visual_id = self.manager.ingest_image(
                             image_path=str(image_path),
+                            ocr_text=ocr_text if ocr_text.strip() else None,
                             metadata=item
                         )
                         if visual_id != -1:
                             count += 1
+                            if ocr_text.strip():
+                                print(f"      🔤 OCR extracted {len(ocr_text)} chars from {Path(image_path).name}")
                     continue
 
                 # Create searchable text from file activity
@@ -166,14 +176,16 @@ class DataIngestionPipeline:
                     # For images, use file path if available
                     file_path = item.get('file_path', '')
                     if file_path and Path(file_path).exists():
-                        # TODO: Add OCR support
-                        # For now, just store metadata
-                        self.manager.ingest_text(
-                            f"Image captured at {timestamp}",
-                            source='clipboard_image',
+                        # Run OCR to extract text from clipboard image
+                        ocr_text = self.image_processor.extract_text(file_path)
+                        self.manager.ingest_image(
+                            image_path=file_path,
+                            ocr_text=ocr_text if ocr_text.strip() else None,
                             metadata=item
                         )
                         count += 1
+                        if ocr_text.strip():
+                            print(f"      🔤 OCR extracted {len(ocr_text)} chars from clipboard image")
                 
                 elif content_type == 'files':
                     # Store file list
