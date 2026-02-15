@@ -57,3 +57,229 @@
     "full_path": "C:\\Users\\USER\\Desktop\\quote.jpg",
     "content_type": "image"
 }
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "FOLDER_CREATED",
+    "folder_name": "a3",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\a3"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "CREATED",
+    "filename": "tmp_obj_WUmyEA",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\a3\\tmp_obj_WUmyEA",
+    "content_type": "file"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "MOVED",
+    "filename": "tmp_obj_WUmyEA",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\a3\\tmp_obj_WUmyEA",
+    "content_type": "file",
+    "destination_filename": "4868a6c03878199c83182d37c21723771e08dd",
+    "destination_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\a3\\4868a6c03878199c83182d37c21723771e08dd"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "FOLDER_CREATED",
+    "folder_name": "74",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\74"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "CREATED",
+    "filename": "tmp_obj_wYpdNx",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\74\\tmp_obj_wYpdNx",
+    "content_type": "file"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "MOVED",
+    "filename": "tmp_obj_wYpdNx",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\74\\tmp_obj_wYpdNx",
+    "content_type": "file",
+    "destination_filename": "499b407573d367b5e4ef8567176dac4de82e12",
+    "destination_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\74\\499b407573d367b5e4ef8567176dac4de82e12"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "CREATED",
+    "filename": "tmp_obj_VCxI9D",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\a3\\tmp_obj_VCxI9D",
+    "content_type": "file"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "MOVED",
+    "filename": "tmp_obj_VCxI9D",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\a3\\tmp_obj_VCxI9D",
+    "content_type": "file",
+    "destination_filename": "e82ec2dd1ed205953738084927dc7c74da5536",
+    "destination_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\a3\\e82ec2dd1ed205953738084927dc7c74da5536"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "FOLDER_CREATED",
+    "folder_name": "8e",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\8e"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "CREATED",
+    "filename": "tmp_obj_5lTS2m",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\8e\\tmp_obj_5lTS2m",
+    "content_type": "file"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "MOVED",
+    "filename": "tmp_obj_5lTS2m",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\8e\\tmp_obj_5lTS2m",
+    "content_type": "file",
+    "destination_filename": "9b5035c9bea2d14a5207a1c11ac9d22eb5a7bc",
+    "destination_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\8e\\9b5035c9bea2d14a5207a1c11ac9d22eb5a7bc"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "DELETED",
+    "filename": "index",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\index",
+    "content_type": "file"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "FOLDER_CREATED",
+    "folder_name": "3f",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\3f"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "CREATED",
+    "filename": "tmp_obj_IKw8Ik",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\3f\\tmp_obj_IKw8Ik",
+    "content_type": "file"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "MOVED",
+    "filename": "tmp_obj_IKw8Ik",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\3f\\tmp_obj_IKw8Ik",
+    "content_type": "file",
+    "destination_filename": "aca2e192e14d6cb94a31fc83ac4a88f1986c07",
+    "destination_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\3f\\aca2e192e14d6cb94a31fc83ac4a88f1986c07"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "FOLDER_CREATED",
+    "folder_name": "65",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\65"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "CREATED",
+    "filename": "tmp_obj_JMTFb7",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\65\\tmp_obj_JMTFb7",
+    "content_type": "file"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "MOVED",
+    "filename": "tmp_obj_JMTFb7",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\65\\tmp_obj_JMTFb7",
+    "content_type": "file",
+    "destination_filename": "bbd2d3b788e5bfaca235deacf8308c08390176",
+    "destination_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\65\\bbd2d3b788e5bfaca235deacf8308c08390176"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "FOLDER_CREATED",
+    "folder_name": "e1",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\e1"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "CREATED",
+    "filename": "tmp_obj_RVvBFD",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\e1\\tmp_obj_RVvBFD",
+    "content_type": "file"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "MOVED",
+    "filename": "tmp_obj_RVvBFD",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\e1\\tmp_obj_RVvBFD",
+    "content_type": "file",
+    "destination_filename": "fa5f75b3c8ae6ee3db10f117546226cbe9e018",
+    "destination_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\e1\\fa5f75b3c8ae6ee3db10f117546226cbe9e018"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "FOLDER_CREATED",
+    "folder_name": "58",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\58"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "CREATED",
+    "filename": "tmp_obj_WMEztP",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\58\\tmp_obj_WMEztP",
+    "content_type": "file"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "MOVED",
+    "filename": "tmp_obj_WMEztP",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\58\\tmp_obj_WMEztP",
+    "content_type": "file",
+    "destination_filename": "1e4fdf0c8ba50861e3daac5b012a0176b8cb74",
+    "destination_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\58\\1e4fdf0c8ba50861e3daac5b012a0176b8cb74"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "FOLDER_CREATED",
+    "folder_name": "28",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\28"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "CREATED",
+    "filename": "tmp_obj_6uOKXc",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\28\\tmp_obj_6uOKXc",
+    "content_type": "file"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "MOVED",
+    "filename": "tmp_obj_6uOKXc",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\28\\tmp_obj_6uOKXc",
+    "content_type": "file",
+    "destination_filename": "5be25a54f2f1c3acfa53a6e80ea17306672012",
+    "destination_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\objects\\28\\5be25a54f2f1c3acfa53a6e80ea17306672012"
+}
+{
+    "timestamp": "2026-02-15 02:41:52",
+    "event_type": "DELETED",
+    "filename": "master",
+    "file_extension": "",
+    "full_path": "C:\\Users\\USER\\Desktop\\Five-Pickles_AI-minds-main\\.git\\refs\\heads\\master",
+    "content_type": "file"
+}
